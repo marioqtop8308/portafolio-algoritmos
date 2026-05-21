@@ -33,6 +33,17 @@ en la barra superior.
 
 A medida que avanzo en el curso voy agregando más unidades aquí.
 
+### Unidad 3 — Estructuras de datos elementales
+
+Comparación de dos enfoques algorítmicos para resolver el problema del
+producto punto máximo (top-1): un enfoque directo basado en multiplicación
+matricial completa ($A_1: P = Q^\top X$) y una variante adaptada de
+`getmaxdot` que procesa columna por columna ahorrando memoria ($A_2$).
+Análisis del trade-off entre tiempo de ejecución y uso de memoria sobre
+matrices densas de distintos tamaños.
+
+[Ir al reporte →](unidad-3/index.qmd){.btn-portafolio}
+
 ### Unidad 4 — Algoritmos de ordenamiento
 
 Comparación experimental de cuatro algoritmos clásicos —Bubblesort

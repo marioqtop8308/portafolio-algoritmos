@@ -1,0 +1,464 @@
+---
+title: "Unidad 3 — Estructuras de Datos Elementales"
+subtitle: "Actividad 3.7: Producto punto máximo (top-1)"
+author: "Mario Galván Rosales"
+date: today
+lang: es-MX
+engine: julia
+julia:
+  exeflags: ["--project=.."]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{julia}
+#| echo: false
+#| label: setup
+#| output: false
+ENV["GKSwstype"] = "100"
+using Plots
+using Printf
+using Statistics
+using DataFrames
+using LinearAlgebra
+
+gr()
+```
+
+# Introducción
+
+Para esta Actividad 3.7, el objetivo es resolver el problema de encontrar el **producto punto máximo** (o top-1) comparando dos enfoques algorítmicos distintos. Dadas dos matrices $Q$ de tamaño $d \times m$ y $X$ de tamaño $d \times n$, buscamos asociar cada columna $q_j$ de $Q$ con la columna $x_i$ de $X$ que maximice su producto punto. 
+
+En términos prácticos, queremos llenar dos arreglos para cada columna de $Q$: uno con el índice del mejor vector en $X$ (`nns`) y otro con el valor de ese producto punto máximo (`dots`). Este tipo de operaciones es fundamental cuando buscamos similitudes o vecinos más cercanos en espacios vectoriales.
+
+Se nos pide contrastar dos algoritmos:
+- **A1**: El enfoque directo o de fuerza bruta matricial, donde se calcula toda la matriz de productos $P = Q^\top X$ y luego se extraen los máximos fila por fila.
+- **A2**: Una adaptación de la función `getmaxdot` vista en clase, que procesa el problema iterando columna por columna, calculando el máximo sobre la marcha para ahorrar memoria.
+
+# Desarrollo
+
+## Generación de datos en la esfera unitaria
+
+Para que las pruebas tengan sentido y estemos midiendo similitud real (equivalente a la similitud del coseno), los vectores deben estar normalizados en la esfera unitaria, es decir, tener una norma igual a 1. 
+
+Para generarlos, utilicé la distribución normal estándar (`randn`) antes de normalizar. Es un detalle importante de implementación: si simplemente usara números aleatorios uniformes (`rand`), los vectores tenderían a amontonarse en el cuadrante positivo del hipercubo, sesgando fuertemente los resultados de los productos punto.
+
+```{julia}
+#| label: generacion-datos
+#| fig-cap: |
+#|   Función para generar matrices con columnas en la esfera unitaria.
+
+"""
+    genera_esfera(d, n)
+
+Genera una matriz de tamaño `d × n` donde cada columna es un vector
+unitario (norma = 1). Se usa distribución normal estándar y se normaliza
+cada columna iterativamente.
+"""
+function genera_esfera(d::Int, n::Int)
+    M = randn(Float32, d, n)
+    # Normalizamos cada columna
+    for j in 1:n
+        norma = 0f0
+        for i in 1:d
+            norma += M[i, j]^2
+        end
+        
+        norma = sqrt(norma)
+        for i in 1:d
+            M[i, j] /= norma
+        end
+    end
+    return M
+end
+
+# Verificación rápida de que las normas dan ≈ 1.0
+M_test = genera_esfera(4, 5)
+normas = [sqrt(sum(M_test[:, j].^2)) for j in 1:5]
+println("Normas de prueba: ", round.(normas, digits=6))
+```
+
+## Algoritmo A1: Producto matricial explícito
+
+El algoritmo A1 se basa en la idea de que podemos obtener todos los productos punto de golpe calculando una matriz intermedia $P = Q^\top X$. Esta matriz tendrá un tamaño de $m \times n$. Una vez que la tenemos cargada en memoria, solo es cuestión de recorrer cada fila para encontrar el valor máximo y guardar su posición.
+
+Para cumplir con la naturaleza de la actividad, evité usar el operador de multiplicación nativo de Julia (que llamaría a BLAS por debajo) e implementé la multiplicación elemento por elemento.
+
+```{julia}
+#| label: algoritmo-A1
+
+"""
+    mydot(u, X, col)
+
+Calcula el producto punto entre el vector `u` y la columna `col` de la
+matriz `X`. Se accede elemento por elemento.
+"""
+function mydot(u, X, col::Int)
+    s = 0f0
+    @inbounds for i in eachindex(u)
+        s += u[i] * X[i, col]
+    end
+    return s
+end
+
+"""
+    algoritmo_A1(Q, X)
+
+Resuelve el problema top-1 mediante el producto matricial explícito.
+"""
+function algoritmo_A1(Q::Matrix{Float32}, X::Matrix{Float32})
+    d, m = size(Q)
+    _, n = size(X)
+
+    # Construimos P = Qᵀ X (Aquí estará el principal cuello de botella de memoria)
+    P = Matrix{Float32}(undef, m, n)
+    for j in 1:m
+        for k in 1:n
+            P[j, k] = mydot(@view(Q[:, j]), X, k)
+        end
+    end
+
+    nns = Vector{Int}(undef, m)
+    dots = Vector{Float32}(undef, m)
+    
+    # Extraemos el máximo por fila
+    for j in 1:m
+        max_val = P[j, 1]
+        max_idx = 1
+        for k in 2:n
+            if P[j, k] > max_val
+                max_val = P[j, k]
+                max_idx = k
+            end
+        end
+        nns[j] = max_idx
+        dots[j] = max_val
+    end
+
+    return nns, dots
+end
+
+println("Algoritmo A1 definido correctamente.")
+```
+
+Construir $P$ nos toma un tiempo de $O(mnd)$, y buscar los máximos requiere $O(mn)$. Teóricamente el costo de tiempo está dominado por el cálculo de la matriz. El verdadero problema de este enfoque, como veremos en los experimentos, no es el tiempo de procesamiento, sino la cantidad de memoria $O(mn)$ extra que necesitamos para alojar $P$.
+
+## Algoritmo A2: Adaptación de `getmaxdot`
+
+Para sortear el costo masivo de memoria de A1, el algoritmo A2 procesa los datos de forma iterativa, basándose en la función de los apuntes. Por cada columna en $Q$, calculamos su producto punto contra todas las columnas de $X$, pero solo guardamos temporalmente el valor máximo que llevamos hasta el momento. Esto significa que **nunca construimos la matriz $P$**.
+
+```{julia}
+#| label: algoritmo-A2
+
+"""
+    getmaxdot_col(Q, j, X)
+
+Para una columna `j` de `Q`, recorre todas las columnas de `X` y devuelve
+el índice y valor del producto punto máximo.
+"""
+function getmaxdot_col(Q, j::Int, X)
+    d, n = size(X)
+    max_dot = mydot(@view(Q[:, j]), X, 1)
+    max_pos = 1
+    
+    for k in 2:n
+        d_val = mydot(@view(Q[:, j]), X, k)
+        if d_val > max_dot
+            max_dot = d_val
+            max_pos = k
+        end
+    end
+    return max_pos, max_dot
+end
+
+"""
+    algoritmo_A2(Q, X)
+
+Resuelve el problema top-1 sin construir la matriz P completa, ahorrando memoria.
+"""
+function algoritmo_A2(Q::Matrix{Float32}, X::Matrix{Float32})
+    _, m = size(Q)
+    nns = Vector{Int}(undef, m)
+    dots = Vector{Float32}(undef, m)
+
+    for j in 1:m
+        pos, val = getmaxdot_col(Q, j, X)
+        nns[j] = pos
+        dots[j] = val
+    end
+
+    return nns, dots
+end
+
+println("Algoritmo A2 definido correctamente.")
+```
+
+A nivel de tiempo, A2 también realiza $O(mnd)$ operaciones, pero su huella de memoria adicional es mínima: solo necesita $O(m)$ para guardar los arreglos resultantes `nns` y `dots`.
+
+```{julia}
+#| label: verificacion
+
+# Verificación rápida de que ambos algoritmos hacen exactamente lo mismo
+d_test, m_test, n_test = 4, 10, 100
+Q_test = genera_esfera(d_test, m_test)
+X_test = genera_esfera(d_test, n_test)
+
+nns1, dots1 = algoritmo_A1(Q_test, X_test)
+nns2, dots2 = algoritmo_A2(Q_test, X_test)
+
+println("¿Los índices coinciden?  ", nns1 == nns2)
+println("¿Los valores coinciden? ", dots1 ≈ dots2)
+```
+
+## Análisis de memoria
+
+Aquí es donde se nota la diferencia crítica entre ambos enfoques. A continuación calculo la memoria teórica requerida en bytes para combinaciones de $m, n \in \{10^3, 10^6, 10^9\}$ asumiendo que usamos elementos `Float32` (4 bytes).
+
+La fórmula para la memoria base (matrices $Q, X$ y arreglos de salida) es:
+$\text{Mem}_{base} = 4(dm + dn) + 12m$ bytes.
+A esto, el Algoritmo A1 le debe sumar la matriz intermedia $P$: $4mn$ bytes.
+
+```{julia}
+#| label: analisis-memoria
+
+function memoria_bytes(d, m, n, algoritmo::Symbol)
+    mem_Q = d * m * 4
+    mem_X = d * n * 4
+    mem_nns = m * 8
+    mem_dots = m * 4
+    mem_base = mem_Q + mem_X + mem_nns + mem_dots
+
+    if algoritmo == :A1
+        mem_P = m * n * 4
+        return mem_base + mem_P
+    else
+        return mem_base
+    end
+end
+
+function formato_memoria(bytes)
+    if bytes < 1024
+        return @sprintf("%.0f B", bytes)
+    elseif bytes < 1024^2
+        return @sprintf("%.2f KB", bytes / 1024)
+    elseif bytes < 1024^3
+        return @sprintf("%.2f MB", bytes / 1024^2)
+    elseif bytes < 1024^4
+        return @sprintf("%.2f GB", bytes / 1024^3)
+    elseif bytes < 1024^5
+        return @sprintf("%.2f TB", bytes / 1024^4)
+    else
+        return @sprintf("%.2f PB", bytes / 1024^5)
+    end
+end
+
+ms = [10^3, 10^6, 10^9]
+ns = [10^3, 10^6, 10^9]
+ds = [8, 16, 32]
+
+println("\nResumen de Memoria Teórica (Ejemplo con d=16):")
+for m in ms
+    for n in ns
+        mem1 = memoria_bytes(16, m, n, :A1)
+        mem2 = memoria_bytes(16, m, n, :A2)
+        diff = mem1 - mem2
+        @printf("m=10^%d, n=10^%d | A1: %-10s | A2: %-10s | P usa: %-10s\n",
+                Int(log10(m)), Int(log10(n)), 
+                formato_memoria(Float64(mem1)), 
+                formato_memoria(Float64(mem2)),
+                formato_memoria(Float64(diff)))
+    end
+end
+```
+
+Como se observa en los cálculos, pedirle a A1 que procese $m = 10^6$ y $n = 10^6$ implica tratar de alojar una matriz de aproximadamente 3.64 Terabytes. En una computadora convencional, intentar esto causaría que el sistema operativo colapse o aborte el proceso por falta de RAM. A2, por otro lado, maneja esa misma cantidad de datos consumiendo apenas unos 76 megabytes extras.
+
+```{julia}
+#| label: fig-memoria
+#| fig-cap: |
+#|   Comparación de memoria entre A1 y A2 para d=16, m=10³,
+#|   variando n en escala logarítmica.
+
+d_plot = 16
+m_plot = 10^3
+ns_plot = [10^i for i in 1:9]
+
+mem_A1 = [memoria_bytes(d_plot, m_plot, n, :A1) / 1024^3 for n in ns_plot]
+mem_A2 = [memoria_bytes(d_plot, m_plot, n, :A2) / 1024^3 for n in ns_plot]
+
+p = plot(ns_plot, mem_A1,
+    label="A1 (con matriz P)",
+    xlabel="n (número de columnas en X)",
+    ylabel="Memoria (GB)",
+    xscale=:log10,
+    yscale=:log10,
+    linewidth=2,
+    marker=:circle,
+    title="Memoria requerida (d=$d_plot, m=$(m_plot))",
+    legend=:topleft,
+    size=(700, 450))
+
+plot!(p, ns_plot, mem_A2,
+    label="A2 (sin matriz P)",
+    linewidth=2,
+    marker=:square,
+    linestyle=:dash)
+
+p
+```
+
+## Experimentos de tiempo: $m = 10^3$, $n = 10^6$, $d = 16$
+
+Para poner a prueba los algoritmos en la práctica, ejecuté la configuración $m=10^3$, $n=10^6$ con $d=16$. 
+
+Al intentar correr A1 con estos parámetros, la matriz $P$ requiere de casi 4 GB de memoria continua. Dependiendo de la RAM disponible, esto puede forzar el uso de memoria *swap* en el disco duro, ralentizando por completo la ejecución. Para asegurar que el experimento pudiera correr sin crashear mi equipo, escribí una versión "por bloques" de A1. Esta versión fracciona las filas de $Q$, manteniendo la lógica de construir matrices de productos punto, pero liberando la memoria del bloque en cada iteración. A2 se ejecutó de forma normal.
+
+```{julia}
+#| label: experimento-tiempo
+
+d_exp = 16
+m_exp = 10^3
+n_exp = 10^6
+
+Q_exp = genera_esfera(d_exp, m_exp)
+X_exp = genera_esfera(d_exp, n_exp)
+
+# A1 adaptado por bloques para evitar saturar la RAM
+function algoritmo_A1_bloques(Q, X; tam_bloque=100)
+    d, m = size(Q)
+    _, n = size(X)
+    nns = Vector{Int}(undef, m)
+    dots = Vector{Float32}(undef, m)
+
+    for inicio in 1:tam_bloque:m
+        fin = min(inicio + tam_bloque - 1, m)
+        bloque_m = fin - inicio + 1
+
+        P_bloque = Matrix{Float32}(undef, bloque_m, n)
+        for jj in 1:bloque_m
+            j = inicio + jj - 1
+            for k in 1:n
+                P_bloque[jj, k] = mydot(@view(Q[:, j]), X, k)
+            end
+        end
+
+        for jj in 1:bloque_m
+            j = inicio + jj - 1
+            max_val = P_bloque[jj, 1]
+            max_idx = 1
+            for k in 2:n
+                if P_bloque[jj, k] > max_val
+                    max_val = P_bloque[jj, k]
+                    max_idx = k
+                end
+            end
+            nns[j] = max_idx
+            dots[j] = max_val
+        end
+        P_bloque = nothing # Liberamos el bloque
+    end
+    return nns, dots
+end
+
+# Calentamiento (compilación JIT)
+algoritmo_A1_bloques(Q_exp[:, 1:10], X_exp[:, 1:100])
+algoritmo_A2(Q_exp[:, 1:10], X_exp[:, 1:100])
+
+GC.gc()
+t2_start = time()
+nns2, dots2 = algoritmo_A2(Q_exp, X_exp)
+t2 = time() - t2_start
+
+GC.gc()
+t1_start = time()
+nns1, dots1 = algoritmo_A1_bloques(Q_exp, X_exp; tam_bloque=50)
+t1 = time() - t1_start
+
+@printf("\nResultados de tiempo:\n")
+@printf("  A1 (por bloques): %.4f s\n", t1)
+@printf("  A2 (iterativo):   %.4f s\n", t2)
+```
+
+En la práctica, A2 tiende a ser más eficiente. Esto no se debe a que haga menos operaciones (ambos son $O(mnd)$), sino al comportamiento de la memoria caché del procesador. A2 accede a los datos de forma iterativa y obtiene el máximo sobre la marcha. A1, incluso por bloques, necesita escribir una matriz en la RAM y luego volver a iterar sobre ella para extraer los máximos, provocando lecturas y escrituras innecesarias a la memoria principal.
+
+## Distribución del arreglo `dots`
+
+Finalmente, grafiqué cómo se distribuyen los valores del arreglo `dots` obtenidos con el algoritmo A2. Como estamos buscando el *máximo* entre un millón de posibles vectores unitarios, por pura probabilidad estadística (teoría de valores extremos), la mayoría de los productos punto se acercan bastante a 1.0.
+
+```{julia}
+#| label: fig-distribucion
+#| fig-cap: |
+#|   Distribución de los valores máximos del producto punto (dots)
+#|   para d=16, m=10³, n=10⁶.
+
+p_hist = histogram(dots2,
+    bins=40,
+    xlabel="Producto punto máximo",
+    ylabel="Frecuencia",
+    title="Distribución de dots (d=$d_exp, m=$m_exp, n=$n_exp)",
+    label="dots",
+    fillalpha=0.7,
+    color=:steelblue,
+    size=(700, 450),
+    legend=:topleft)
+
+vline!(p_hist, [mean(dots2)],
+    label="Media = $(@sprintf("%.4f", mean(dots2)))",
+    linewidth=2,
+    linestyle=:dash,
+    color=:red)
+
+p_hist
+```
+
+## Efecto de la dimensión
+
+Para ilustrar qué pasa si aumentamos la dimensionalidad, comparé la distribución de `dots` para $d \in \{8, 16, 32\}$. Reduje $n$ a $10^5$ en este último bloque para que la compilación del reporte no tomara tanto tiempo.
+
+```{julia}
+#| label: fig-comparacion-d
+#| fig-cap: |
+#|   Efecto de la dimensionalidad d sobre la distribución del producto
+#|   punto máximo.
+
+m_comp = 10^3
+n_comp = 10^5 
+
+p_comp = plot(title="Efecto de d en la distribución de dots\n(m=$m_comp, n=$n_comp)",
+    xlabel="Producto punto máximo",
+    ylabel="Frecuencia",
+    size=(700, 450),
+    legend=:topleft)
+
+colores = [:steelblue, :darkorange, :forestgreen]
+
+for (idx, d_val) in enumerate([8, 16, 32])
+    Q_c = genera_esfera(d_val, m_comp)
+    X_c = genera_esfera(d_val, n_comp)
+    _, dots_c = algoritmo_A2(Q_c, X_c)
+
+    histogram!(p_comp, dots_c,
+        bins=35,
+        label="d=$d_val (μ=$(@sprintf("%.3f", mean(dots_c))))",
+        fillalpha=0.4,
+        color=colores[idx])
+end
+
+p_comp
+```
+
+Como se esperaba, al aumentar $d$, la curva se desplaza a la izquierda. En dimensiones más altas, los vectores aleatorios tienden a ser ortogonales entre sí (un fenómeno ligado a la maldición de la dimensionalidad). Por lo tanto, encontrar un vector muy alineado en un espacio grande se vuelve considerablemente más raro.
+
+# Conclusiones
+
+Esta actividad me sirvió para comprobar de forma práctica que analizar algoritmos guiándonos solo por el tiempo asintótico ($O$) no es suficiente. Teóricamente, A1 y A2 son equivalentes en tiempo $O(mnd)$, pero en cuanto escalamos el tamaño de las variables $m$ y $n$, A1 se vuelve inviable por su enorme consumo de memoria de orden $O(mn)$.
+
+El simple hecho de tener que adaptar A1 a un procesamiento por bloques demuestra que la estructura de la memoria intermedia puede limitar por completo la ejecución de un programa en una máquina convencional. Por otro lado, la aproximación de A2 resolvió exactamente el mismo problema matemático, pero aprovechando una huella de memoria plana de $O(m)$ que evita la creación de la gran matriz intermedia. Queda claro que al trabajar con bases de datos grandes, optimizar la memoria y cuidar cómo interactuamos con la caché resulta tan crítico como optimizar los ciclos de CPU.
+
+# Referencias
+
+- Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2022). *Introduction to Algorithms* (4th ed.). MIT Press.
+- Scott, J., & Tůma, M. (2023). An Introduction to Sparse Matrices. En *Algorithms for Sparse Linear Systems* (pp. 1–18). Springer International Publishing.
+- Sadit. *Curso Introductorio al Análisis de Algoritmos con Julia*, Cap. 3: Estructuras de datos elementales.
