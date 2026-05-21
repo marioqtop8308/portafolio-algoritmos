@@ -590,7 +590,7 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Reportes del curso Análisis de Algoritmos",
+    "title": "Actividades del curso Análisis de Algoritmos",
     "section": "",
     "text": "NotaFicha del estudiante\n\n\n\nInstitución: INFOTEC — Centro de Investigación e Innovación en Tecnologías de la Información y Comunicación\nPrograma: Maestría en Ciencia de Datos e Información\nMateria: Análisis de Algoritmos\nEstudiante: Mario Galván Rosales\nCurso de referencia: Curso Introductorio al Análisis de Algoritmos con Julia por Dr. Eric Sadit Téllez Ávila",
     "crumbs": [
@@ -602,7 +602,7 @@
   {
     "objectID": "index.html#sobre-esta-página",
     "href": "index.html#sobre-esta-página",
-    "title": "Reportes del curso Análisis de Algoritmos",
+    "title": "Actividades del curso Análisis de Algoritmos",
     "section": "Sobre esta página",
     "text": "Sobre esta página\nEn este sitio recopilo los reportes de las prácticas que voy desarrollando como parte del curso de Análisis de Algoritmos. Cada unidad corresponde a una actividad evaluable del programa, e incluye tanto la implementación de los algoritmos en Julia como el análisis experimental sobre datos reales.\nLos reportes están escritos con Quarto y se compilan a partir de archivos .qmd que combinan texto explicativo, código Julia ejecutable y gráficos generados automáticamente. El código fuente completo está disponible en el repositorio enlazado en la barra superior.",
     "crumbs": [
@@ -614,7 +614,7 @@
   {
     "objectID": "index.html#unidades-publicadas",
     "href": "index.html#unidades-publicadas",
-    "title": "Reportes del curso Análisis de Algoritmos",
+    "title": "Actividades del curso Análisis de Algoritmos",
     "section": "Unidades publicadas",
     "text": "Unidades publicadas\nA medida que avanzo en el curso voy agregando más unidades aquí.\n\nUnidad 1 — Máquina de Turing\nCodificación matemática de una máquina de Turing que calcula la función \\(f(n) = 3n + 1\\). Se definen formalmente los componentes del modelo —conjunto de estados, alfabetos, función de transición— y se ilustra el funcionamiento paso a paso sobre una entrada concreta en notación unaria.\nIr al reporte →\n\n\nUnidad 2 — Comparación de órdenes de crecimiento\nAnálisis empírico y visual de cómo escalan distintas complejidades temporales (\\(O(1)\\), \\(O(\\log n)\\), \\(O(n)\\), \\(O(n \\log n)\\), \\(O(n^2)\\), \\(O(2^n)\\), \\(O(n!)\\)) en función del tamaño de entrada. Se calculan los tiempos teóricos esperados para tamaños \\(n \\in \\{100, 10^3, 10^4, 10^5\\}\\) y se discute por qué la notación asintótica importa en la práctica.\nIr al reporte →\n\n\nUnidad 3 — Estructuras de datos elementales\nComparación de dos enfoques algorítmicos para resolver el problema del producto punto máximo (top-1): un enfoque directo basado en multiplicación matricial completa (\\(A_1: P = Q^\\top X\\)) y una variante adaptada de getmaxdot que procesa columna por columna ahorrando memoria (\\(A_2\\)). Análisis del trade-off entre tiempo de ejecución y uso de memoria sobre matrices densas de distintos tamaños.\nIr al reporte →\n\n\nUnidad 4 — Algoritmos de ordenamiento\nComparación experimental de cuatro algoritmos clásicos —Bubblesort adaptativo, Mergesort, Quicksort con pivote aleatorio y Heapsort— sobre listas de posteo con distintos niveles de perturbación. Se mide tanto el número exacto de comparaciones como el tiempo de ejecución, y se discute por qué la complejidad asintótica no siempre coincide con el desempeño real (efectos de caché, presortedness, comportamiento adaptativo).\nIr al reporte →\n\n\nUnidad 5 — Algoritmos de búsqueda en el modelo de comparación\nAnálisis experimental de algoritmos de búsqueda sobre listas ordenadas. Se comparan cuatro estrategias —búsqueda binaria, \\(B_0\\) secuencial, \\(B_1\\) doblada y \\(B_2\\) doblemente doblada— sobre listas de posteo reales con distintos niveles de perturbación y cuatro distribuciones de consultas. Verificación empírica de las cotas teóricas de Bentley y Yao (1976).\nIr al reporte →\n\n\nUnidad 6 — Algoritmos de intersección y unión de conjuntos\nDiseño y comparación de estrategias para resolver el problema de intersección de listas ordenadas, motivado por la operación fundamental en motores de búsqueda. Se implementan cinco configuraciones (Merge clásico, Baeza-Yates parametrizado con tres búsquedas distintas, y Barbay-Kenyon) y se comparan empíricamente sobre 600 instancias reales de posting lists.\nIr al reporte →",
     "crumbs": [
@@ -626,7 +626,7 @@
   {
     "objectID": "index.html#sobre-el-código",
     "href": "index.html#sobre-el-código",
-    "title": "Reportes del curso Análisis de Algoritmos",
+    "title": "Actividades del curso Análisis de Algoritmos",
     "section": "Sobre el código",
     "text": "Sobre el código\nTodas las implementaciones están escritas en Julia 1.10 y los reportes usan los paquetes JSON, CodecZlib, Plots, StatsPlots, Statistics y Random. Para reproducir cualquiera de los reportes basta con clonar el repositorio y ejecutar quarto render desde la raíz del proyecto.",
     "crumbs": [

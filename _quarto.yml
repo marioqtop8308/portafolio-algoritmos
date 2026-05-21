@@ -3,7 +3,7 @@ project:
   output-dir: docs       # GitHub Pages servirá desde aquí
 
 website:
-  title: "Reportes del curso Análisis de Algoritmos"
+  title: "Actividades del curso Análisis de Algoritmos"
   description: "Portafolio de prácticas — Mario Galván Rosales, INFOTEC"
 
   navbar:

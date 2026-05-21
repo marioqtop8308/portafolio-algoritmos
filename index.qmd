@@ -1,5 +1,5 @@
 ---
-title: "Reportes del curso Análisis de Algoritmos"
+title: "Actividades del curso Análisis de Algoritmos"
 subtitle: "Portafolio de prácticas — Maestría en Ciencia de Datos e Información"
 lang: es-MX
 ---
