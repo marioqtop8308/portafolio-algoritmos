@@ -14,6 +14,8 @@ website:
         text: Sobre esta página
       - text: Unidades
         menu:
+          - href: unidad-4/index.qmd
+            text: "Unidad 4 — Algoritmos de ordenamiento"
           - href: unidad-5/index.qmd
             text: "Unidad 5 — Búsqueda por comparación"
           - href: unidad-6/index.qmd
@@ -32,6 +34,8 @@ website:
             href: index.qmd
       - section: "Unidades publicadas"
         contents:
+          - text: "Unidad 4 — Algoritmos de ordenamiento"
+            href: unidad-4/index.qmd
           - text: "Unidad 5 — Búsqueda por comparación"
             href: unidad-5/index.qmd
           - text: "Unidad 6 — Intersección de conjuntos"

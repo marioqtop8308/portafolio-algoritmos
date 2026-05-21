@@ -33,6 +33,18 @@ en la barra superior.
 
 A medida que avanzo en el curso voy agregando más unidades aquí.
 
+### Unidad 4 — Algoritmos de ordenamiento
+
+Comparación experimental de cuatro algoritmos clásicos —Bubblesort
+adaptativo, Mergesort, Quicksort con pivote aleatorio y Heapsort— sobre
+listas de posteo con distintos niveles de perturbación. Se mide tanto
+el número exacto de comparaciones como el tiempo de ejecución, y se
+discute por qué la complejidad asintótica no siempre coincide con el
+desempeño real (efectos de caché, presortedness, comportamiento
+adaptativo).
+
+[Ir al reporte →](unidad-4/index.qmd){.btn-portafolio}
+
 ### Unidad 5 — Algoritmos de búsqueda en el modelo de comparación
 
 Análisis experimental de algoritmos de búsqueda sobre listas ordenadas.

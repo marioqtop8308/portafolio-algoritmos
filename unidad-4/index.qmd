@@ -1,0 +1,664 @@
+---
+title: "Unidad 4 — Algoritmos de Ordenamiento"
+subtitle: "Comparación experimental sobre listas de posteo"
+author: "Mario Galván Rosales"
+date: today
+lang: es-MX
+engine: julia
+julia:
+  exeflags: ["--project=.."]
+bibliography: referencias.bib
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{julia}
+#| echo: false
+#| label: setup
+#| output: false
+ENV["GKSwstype"] = "100"
+using JSON
+using Plots
+using Printf
+using Statistics
+using DataFrames
+using LinearAlgebra
+using Random
+
+gr()
+```
+
+## Introducción
+
+En esta actividad comparo cuatro algoritmos de ordenamiento: **Heapsort**,
+**Mergesort**, **Quicksort** y **Bubblesort adaptativo**. En lugar de usar
+arreglos aleatorios genéricos, la comparación se hace sobre datos reales en
+formato JSON que corresponden a listas de posteo con distintos niveles de
+perturbación $p \in \{16, 32, 64, 128, 256, 512\}$. Estas listas vienen de un
+contexto de Recuperación de Información, donde las secuencias suelen estar
+parcialmente ordenadas porque se construyen y actualizan de forma incremental.
+
+Ese detalle me parece importante: no es lo mismo ordenar un arreglo
+completamente aleatorio que uno que ya tiene bastante estructura. La teoría
+dice que los algoritmos adaptativos, como Bubblesort, sacan provecho de esa
+estructura, mientras que Mergesort o Heapsort se comportan igual sin importar
+cuánto orden haya [@Estivill92]. La pregunta es si eso realmente se nota en
+los números. Para comprobarlo voy a medir tanto el número de comparaciones
+como el tiempo de ejecución de cada algoritmo sobre las seis listas.
+
+## Marco Teórico
+
+### Complejidades esperadas
+
+Antes de correr cualquier experimento conviene tener claras las cotas teóricas
+de cada algoritmo. La @tbl-complejidades las resume para los tres casos
+clásicos junto con el uso de memoria auxiliar. Estos números son la referencia
+contra la cual voy a comparar lo que arrojen los datos reales.
+
+| Algoritmo            | Mejor caso    | Caso promedio    | Peor caso      | Memoria aux. | Adaptativo |
+|:---------------------|:-------------:|:----------------:|:--------------:|:------------:|:----------:|
+| Bubble adaptativo    | $O(n)$        | $O(n^2)$         | $O(n^2)$       | $O(1)$       | Sí         |
+| Mergesort            | $O(n\log n)$  | $O(n\log n)$     | $O(n\log n)$   | $O(n)$       | No         |
+| Quicksort (pivote aleatorio) | $O(n\log n)$ | $O(n\log n)$ | $O(n^2)$  | $O(\log n)$  | No         |
+| Heapsort             | $O(n\log n)$  | $O(n\log n)$     | $O(n\log n)$   | $O(1)$       | No         |
+
+: Comparativa de complejidades teóricas {#tbl-complejidades}
+
+### Medidas de presortedness
+
+Para hablar con precisión de "qué tan ordenado" está un arreglo, la literatura
+usa las llamadas *medidas de presortedness*. La más intuitiva es el número de
+**inversiones** $\text{Inv}(A)$: un par $(i,j)$ es una inversión si $i < j$
+pero $A[i] > A[j]$, es decir, dos elementos que están en el orden equivocado.
+Cuando el arreglo ya está ordenado no hay ninguna inversión; cuando está en
+orden inverso hay $\binom{n}{2}$ inversiones, que es el máximo posible para
+$n$ elementos [@Estivill92].
+
+Esto conecta directamente con el parámetro $p$ de los archivos: un $p$
+pequeño significa que pocos elementos están fuera de su lugar, lo que se
+traduce en un número bajo de inversiones. Para un algoritmo que se adapta a
+estas situaciones —como Bubblesort— ese número de inversiones determina
+prácticamente cuánto trabajo va a tener que hacer [@Cook80].
+
+## Desarrollo
+
+### Carga de datos
+
+Los seis archivos JSON se cargan y se extraen los arreglos correspondientes a
+la clave `"reunion"`, que contiene la lista de posteo principal.
+
+```{julia}
+#| label: carga-datos
+
+archivos = [
+    "datos/listas-posteo-con-perturbaciones-p=016.json",
+    "datos/listas-posteo-con-perturbaciones-p=032.json",
+    "datos/listas-posteo-con-perturbaciones-p=064.json",
+    "datos/listas-posteo-con-perturbaciones-p=128.json",
+    "datos/listas-posteo-con-perturbaciones-p=256.json",
+    "datos/listas-posteo-con-perturbaciones-p=512.json",
+]
+
+p_values = [16, 32, 64, 128, 256, 512]
+
+datos = Dict{Int, Vector{Int}}()
+for (p, archivo) in zip(p_values, archivos)
+    d = JSON.parsefile(archivo)
+    datos[p] = Vector{Int}(d["reunion"])
+end
+
+println("Archivos cargados.")
+println("Número de elementos por arreglo: ", length(datos[16]))
+```
+
+Todos los arreglos resultaron tener 3,080 elementos. El nivel de perturbación
+$p$ indica aproximadamente cuántos elementos están fuera de su lugar, así que
+espero que los arreglos con $p$ bajo sean notoriamente más fáciles de ordenar
+para los algoritmos adaptativos.
+
+### Número de inversiones por arreglo
+
+Antes de ordenar, calculé el número de inversiones de cada arreglo para tener
+una medida objetiva de presortedness más allá del parámetro $p$. Si los
+valores son bajos, confirma que los arreglos con $p$ pequeño realmente están
+casi ordenados y no solo tienen pocos elementos desplazados al azar.
+
+```{julia}
+#| label: inversiones
+
+"""
+Cuenta el número de inversiones en O(n log n) mediante Mergesort modificado.
+"""
+function count_inversions(arr::Vector{Int})
+    n = length(arr)
+    n <= 1 && return copy(arr), 0
+    mid = div(n, 2)
+    left,  inv_l = count_inversions(arr[1:mid])
+    right, inv_r = count_inversions(arr[mid+1:end])
+    merged = similar(arr)
+    inv_m  = 0
+    i = j = 1
+    k = 1
+    while i <= length(left) && j <= length(right)
+        if left[i] <= right[j]
+            merged[k] = left[i]; i += 1
+        else
+            merged[k] = right[j]; j += 1
+            inv_m += length(left) - i + 1
+        end
+        k += 1
+    end
+    while i <= length(left);  merged[k] = left[i];  i += 1; k += 1; end
+    while j <= length(right); merged[k] = right[j]; j += 1; k += 1; end
+    return merged, inv_l + inv_r + inv_m
+end
+```
+
+Cada vez que un elemento de `right` se elige antes que el resto de `left`,
+todos los elementos restantes de `left` forman una inversión con él.
+
+```{julia}
+#| label: tabla-inversiones
+
+println(rpad("p", 8), rpad("Inversiones", 18), "Inversiones / C(n,2)")
+println("-" ^ 48)
+n = length(datos[16])
+max_inv = n * (n - 1) / 2
+for p in p_values
+    _, inv = count_inversions(datos[p])
+    @printf("%-8d %-18d %.6f\n", p, inv, inv / max_inv)
+end
+```
+
+La columna "Inversiones / C(n,2)" muestra qué fracción del desorden máximo
+tiene cada arreglo. Que incluso $p = 512$ quede lejos de 1.0 explica por qué
+Bubblesort adaptativo no colapsa completamente en ningún caso: todos los
+arreglos, incluyendo el más perturbado, siguen teniendo bastante estructura.
+
+### Implementación de los algoritmos
+
+Implementé los cuatro algoritmos de forma que, además de ordenar, devuelvan
+el número de comparaciones realizadas. Eso me permite analizar no solo el
+tiempo de pared sino también el trabajo interno de cada método, que es lo que
+realmente dice la teoría de complejidad.
+
+#### Bubblesort adaptativo
+
+La clave de la variante adaptativa es el flag `swapped`: si después de una
+pasada completa no hubo ningún intercambio, el arreglo ya está ordenado y
+se puede detener sin necesidad de seguir. Eso es lo que lo hace eficiente
+cuando $p$ es pequeño, porque en pocos pasos ya no encuentra nada que
+corregir [@Estivill92].
+
+```{julia}
+#| label: impl-bubble
+
+function adaptive_bubble_sort(arr::Vector{Int})
+    A = copy(arr)
+    n = length(A)
+    num_comps = 0
+
+    for i in 1:n-1
+        swapped = false
+        for j in 1:n-i
+            num_comps += 1
+            if A[j] > A[j+1]
+                A[j], A[j+1] = A[j+1], A[j]
+                swapped = true
+            end
+        end
+        swapped || break
+    end
+
+    return A, num_comps
+end
+```
+
+Se cuenta cada comparación entre elementos adyacentes. Si en toda una pasada
+no hubo intercambios, el arreglo ya está ordenado y se puede salir del ciclo
+anticipadamente: esa es la propiedad adaptativa del algoritmo.
+
+#### Mergesort
+
+Mergesort divide el arreglo a la mitad recursivamente, ordena cada parte y
+luego las fusiona. El único detalle de implementación que no es obvio es cómo
+pasar el contador de comparaciones entre llamadas recursivas: en Julia no se
+puede modificar un entero pasado por argumento, así que usé `Ref{Int}`, que
+es esencialmente un puntero a un entero mutable.
+
+```{julia}
+#| label: impl-merge
+
+function mergesort(arr::Vector{Int})
+    A = copy(arr)
+    num_comps = Ref(0)
+    _msort!(A, 1, length(A), num_comps)
+    return A, num_comps[]
+end
+
+function _msort!(A::Vector{Int}, lo::Int, hi::Int, num_comps::Ref{Int})
+    if lo < hi
+        mid = div(lo + hi, 2)
+        _msort!(A, lo, mid, num_comps)
+        _msort!(A, mid + 1, hi, num_comps)
+        _merge!(A, lo, mid, hi, num_comps)
+    end
+end
+
+function _merge!(A::Vector{Int}, lo::Int, mid::Int, hi::Int, num_comps::Ref{Int})
+    left  = A[lo:mid]
+    right = A[mid+1:hi]
+    i = j = 1
+    k = lo
+
+    while i <= length(left) && j <= length(right)
+        num_comps[] += 1
+        if left[i] <= right[j]
+            A[k] = left[i]; i += 1
+        else
+            A[k] = right[j]; j += 1
+        end
+        k += 1
+    end
+
+    # Copiar los elementos restantes de cada mitad
+    while i <= length(left);  A[k] = left[i];  i += 1; k += 1; end
+    while j <= length(right); A[k] = right[j]; j += 1; k += 1; end
+end
+```
+
+#### Quicksort
+
+La implementación sigue el enfoque del curso: selección aleatoria de pivote
+para evitar el peor caso cuadrático en arreglos ya ordenados [@Cormen22].
+
+```{julia}
+#| label: impl-quick
+
+function quicksort(arr::Vector{Int})
+    A = copy(arr)
+    num_comps = Ref(0)
+    _qsort!(A, 1, length(A), num_comps)
+    return A, num_comps[]
+end
+
+function _qsort!(A::Vector{Int}, lo::Int, hi::Int, num_comps::Ref{Int})
+    if lo < hi
+        pivot_idx = _partition!(A, lo, hi, num_comps)
+        _qsort!(A, lo, pivot_idx - 1, num_comps)
+        _qsort!(A, pivot_idx + 1, hi, num_comps)
+    end
+end
+
+function _partition!(A::Vector{Int}, lo::Int, hi::Int, num_comps::Ref{Int})
+    # Pivote aleatorio para reducir la probabilidad del peor caso
+    ipiv = rand(lo:hi)
+    A[ipiv], A[hi] = A[hi], A[ipiv]
+    pivot = A[hi]
+
+    i = lo - 1
+    for j in lo:hi-1
+        num_comps[] += 1
+        if A[j] < pivot
+            i += 1
+            A[i], A[j] = A[j], A[i]
+        end
+    end
+
+    A[i+1], A[hi] = A[hi], A[i+1]
+    return i + 1
+end
+```
+
+#### Heapsort
+
+Heapsort tiene dos fases bien separadas: primero reorganiza el arreglo como un
+max-heap, y luego extrae el máximo repetidamente para construir el resultado
+ordenado de atrás hacia adelante. Todo ocurre dentro del mismo arreglo, sin
+memoria auxiliar, lo que lo distingue de Mergesort.
+
+```{julia}
+#| label: impl-heap
+
+function heapsort(arr::Vector{Int})
+    A = copy(arr)
+    n = length(A)
+    num_comps = Ref(0)
+
+    # Fase 1: construir el heap en O(n)
+    for i in div(n, 2):-1:1
+        _sift_down!(A, n, i, num_comps)
+    end
+
+    # Fase 2: extraer el máximo repetidamente
+    for i in n:-1:2
+        A[1], A[i] = A[i], A[1]
+        _sift_down!(A, i - 1, 1, num_comps)
+    end
+
+    return A, num_comps[]
+end
+
+function _sift_down!(A::Vector{Int}, heap_size::Int, root::Int, num_comps::Ref{Int})
+    largest = root
+    left  = 2 * root
+    right = 2 * root + 1
+
+    if left <= heap_size
+        num_comps[] += 1
+        largest = A[left] > A[largest] ? left : largest
+    end
+    if right <= heap_size
+        num_comps[] += 1
+        largest = A[right] > A[largest] ? right : largest
+    end
+
+    if largest != root
+        A[root], A[largest] = A[largest], A[root]
+        _sift_down!(A, heap_size, largest, num_comps)
+    end
+end
+```
+
+### Verificación de correctitud
+
+Antes de correr los experimentos sobre los arreglos reales, comprobé que los
+cuatro algoritmos producen el resultado correcto con un arreglo pequeño de
+prueba. Es un paso sencillo pero evita desperdiciar tiempo interpretando
+resultados de un algoritmo con bug.
+
+```{julia}
+#| label: prueba-correctitud
+
+test_arr = [5, 1, 4, 8, 2, 6, 3, 7]
+println("Arreglo de prueba: ", test_arr, "\n")
+
+algoritmos = [
+    ("Bubble Adaptativo", adaptive_bubble_sort),
+    ("Mergesort",         mergesort),
+    ("Quicksort",         quicksort),
+    ("Heapsort",          heapsort),
+]
+
+for (nombre, fn) in algoritmos
+    resultado, comps = fn(test_arr)
+    estado = issorted(resultado) ? "OK" : "ERROR"
+    @printf("[%s]  %-20s → %s  (%d comparaciones)\n",
+            estado, nombre, resultado, comps)
+end
+```
+
+### Experimentos
+
+Corrí cada algoritmo sobre los seis arreglos y registré tanto las comparaciones
+como el tiempo. Para el tiempo hice 5 repeticiones y tomé el promedio, porque
+Julia compila las funciones en el primer llamado (JIT) y esa primera ejecución
+inflaría el tiempo si solo se midiera una vez.
+
+```{julia}
+#| label: experimentos
+#| output: false
+
+n_p   = length(p_values)
+n_alg = length(algoritmos)
+REPS  = 5
+
+mat_comps  = zeros(Int,     n_p, n_alg)
+mat_tiempo = zeros(Float64, n_p, n_alg)
+
+for (i, p) in enumerate(p_values)
+    arr = datos[p]
+    for (j, (_, fn)) in enumerate(algoritmos)
+        sorted_arr, c = fn(arr)
+        mat_comps[i, j] = c
+        mat_tiempo[i, j] = mean([@elapsed fn(arr) for _ in 1:REPS])
+    end
+end
+```
+
+### Resultados
+
+#### Tabla de comparaciones
+
+Los números muestran de inmediato la diferencia entre Bubblesort y los demás:
+para $p$ bajo sus comparaciones son pocas, pero crecen rápido conforme sube $p$.
+
+```{julia}
+#| label: tabla-comparaciones
+
+nombres_alg = [a[1] for a in algoritmos]
+col_w = 22
+
+println(rpad("p", 6), join(rpad.(nombres_alg, col_w)))
+println("-" ^ (6 + col_w * n_alg))
+for (i, p) in enumerate(p_values)
+    println(rpad(string(p), 6),
+            join(rpad.(string.(mat_comps[i, :]), col_w)))
+end
+```
+
+#### Tabla de tiempos promedio (segundos)
+
+```{julia}
+#| label: tabla-tiempos
+
+println(rpad("p", 6), join(rpad.(nombres_alg, col_w)))
+println("-" ^ (6 + col_w * n_alg))
+for (i, p) in enumerate(p_values)
+    fmts = [@sprintf("%.6f", mat_tiempo[i, j]) for j in 1:n_alg]
+    println(rpad(string(p), 6), join(rpad.(fmts, col_w)))
+end
+```
+
+#### Razón de comparaciones respecto a $n \log_2 n$
+
+Para los algoritmos $O(n \log n)$, la razón $C / (n \log_2 n)$ debería
+mantenerse aproximadamente constante. Un valor alto indica mayor constante
+multiplicativa; Bubblesort excede este valor notoriamente para $p$ grande.
+
+```{julia}
+#| label: tabla-razon
+
+n_arr   = length(datos[16])
+nlogn   = n_arr * log2(n_arr)
+
+println(rpad("p", 6), join(rpad.(nombres_alg, col_w)))
+println(rpad("",  6), join(rpad.(fill("(C / n·log₂n)", col_w), n_alg)))
+println("-" ^ (6 + col_w * n_alg))
+for (i, p) in enumerate(p_values)
+    fmts = [@sprintf("%.4f", mat_comps[i, j] / nlogn) for j in 1:n_alg]
+    println(rpad(string(p), 6), join(rpad.(fmts, col_w)))
+end
+```
+
+Lo que se ve en la tabla es que Mergesort, Quicksort y Heapsort mantienen
+su cociente dentro de un rango bastante estrecho sin importar $p$, lo que
+es evidencia empírica directa de que su costo es $O(n \log n)$
+independientemente de la instancia. El cociente de Bubble, en cambio, sube
+de forma notable con $p$: esa subida es la huella del comportamiento
+cuadrático haciéndose visible en los datos.
+
+#### Comparaciones por nivel de perturbación
+
+```{julia}
+#| label: fig-comparaciones
+#| fig-cap: "Número de comparaciones en función del nivel de perturbación p (escala logarítmica)."
+#| fig-width: 8
+#| fig-height: 5
+
+colores = [:royalblue, :darkorange, :green3, :crimson]
+marcas  = [:circle, :square, :diamond, :utriangle]
+
+# Etiquetas de cadena para evitar que p=16 y p=32 se solapen en el eje X
+p_labels = string.(p_values)
+
+fig_comps = plot(
+    title    = "Comparaciones vs. Nivel de Perturbación",
+    xlabel   = "Perturbación (p)",
+    ylabel   = "Número de comparaciones (escala log)",
+    legend   = :topleft,
+    xticks   = (1:length(p_values), p_labels),
+    yaxis    = :log10,
+    ytickfontsize = 8,
+    grid     = true,
+    size     = (800, 500),
+    left_margin  = 10Plots.mm,
+    bottom_margin = 8Plots.mm,
+)
+
+for (j, nombre) in enumerate(nombres_alg)
+    plot!(fig_comps, 1:length(p_values), mat_comps[:, j],
+          label  = nombre,
+          color  = colores[j],
+          marker = marcas[j],
+          lw = 2, ms = 6)
+end
+fig_comps
+```
+
+#### Tiempo de ejecución por nivel de perturbación
+
+```{julia}
+#| label: fig-tiempos
+#| fig-cap: "Tiempo promedio de ejecución (5 repeticiones) en función de p (escala logarítmica)."
+#| fig-width: 8
+#| fig-height: 5
+
+fig_time = plot(
+    title    = "Tiempo de Ejecución vs. Nivel de Perturbación",
+    xlabel   = "Perturbación (p)",
+    ylabel   = "Tiempo (segundos, escala log)",
+    legend   = :topleft,
+    xticks   = (1:length(p_values), p_labels),
+    yaxis    = :log10,
+    ytickfontsize = 8,
+    grid     = true,
+    size     = (800, 500),
+    left_margin  = 10Plots.mm,
+    bottom_margin = 8Plots.mm,
+)
+
+for (j, nombre) in enumerate(nombres_alg)
+    plot!(fig_time, 1:length(p_values), mat_tiempo[:, j],
+          label  = nombre,
+          color  = colores[j],
+          marker = marcas[j],
+          lw = 2, ms = 6)
+end
+fig_time
+```
+
+#### Razón de comparaciones (normalizada)
+
+```{julia}
+#| label: fig-razon
+#| fig-cap: "Razón C/(n·log₂n) por algoritmo. Valores estables indican comportamiento O(n log n); valores crecientes revelan comportamiento supralineal."
+#| fig-width: 8
+#| fig-height: 5
+
+mat_razon = mat_comps ./ nlogn
+
+fig_razon = plot(
+    title    = "Razón de Comparaciones C / (n·log₂n)",
+    xlabel   = "Perturbación (p)",
+    ylabel   = "C / (n·log₂n)",
+    legend   = :topleft,
+    xticks   = (1:length(p_values), p_labels),
+    grid     = true,
+    size     = (800, 500),
+    left_margin  = 10Plots.mm,
+    bottom_margin = 8Plots.mm,
+)
+
+for (j, nombre) in enumerate(nombres_alg)
+    plot!(fig_razon, 1:length(p_values), mat_razon[:, j],
+          label  = nombre,
+          color  = colores[j],
+          marker = marcas[j],
+          lw = 2, ms = 6)
+end
+fig_razon
+```
+
+## Discusión de Resultados
+
+Lo primero que llama la atención al ver las gráficas es la brecha enorme
+entre Bubblesort y los demás algoritmos conforme $p$ crece. Para $p = 16$
+y $p = 32$ el comportamiento es sorprendentemente bueno: termina rápido y
+con pocas comparaciones, porque casi no hay inversiones que corregir y el
+paro anticipado se activa después de muy pocas pasadas. En ese rango se
+entiende en la práctica lo que describe @Estivill92 sobre algoritmos
+*oportunistas*: si la entrada tiene estructura, el algoritmo la aprovecha.
+El problema es que esa ventaja desaparece en cuanto $p$ sube. Para
+$p = 256$ y $p = 512$ Bubblesort ya se ve claramente rezagado en tiempo,
+y la tabla de razones $C/(n \log_2 n)$ lo confirma de forma numérica:
+mientras los otros tres se mantienen dentro de un rango estrecho, el
+cociente de Bubble sigue creciendo, que es exactamente lo que se
+esperaría de un algoritmo con costo cuadrático.
+
+Mergesort fue el más predecible de los cuatro. Sus comparaciones y su
+tiempo casi no cambian entre un valor de $p$ y otro, lo cual tiene
+sentido: no le importa si el arreglo está casi ordenado o no, siempre
+realiza las mismas divisiones y fusiones. Eso es una garantía valiosa,
+pero tiene un costo: es el único de los cuatro que necesita un arreglo
+auxiliar de tamaño $n$, algo que en aplicaciones con memoria limitada
+podría ser un problema real.
+
+Quicksort y Heapsort quedaron muy cerca entre sí en número de
+comparaciones, pero Quicksort fue consistentemente más rápido en tiempo
+de pared. Esto encaja con lo que comenta @Loeser74 sobre la localidad de
+accesos: cuando Quicksort particiona, trabaja sobre regiones contiguas
+del arreglo, lo que favorece el caché. Heapsort, en cambio, salta entre
+posiciones muy separadas al hacer `sift_down`, lo que genera más fallos
+de caché aunque el conteo de comparaciones sea similar. Este es un
+ejemplo claro de que las comparaciones no cuentan toda la historia del
+desempeño real.
+
+Un resultado que vale la pena destacar es que, para $p = 16$, Bubblesort
+fue competitivo en tiempo con Mergesort y Heapsort, y en algunas
+ejecuciones incluso los superó. Esto es relevante en el contexto de
+Recuperación de Información: si se sabe de antemano que las listas de
+posteo están casi ordenadas —lo cual ocurre frecuentemente cuando se
+actualizan de forma incremental— podría tener sentido elegir un algoritmo
+adaptativo en lugar de uno universalmente eficiente [@Cook80].
+
+## Conclusiones
+
+Este experimento confirmó empíricamente algo que en teoría parece
+abstracto: la complejidad asintótica de un algoritmo sí se refleja en
+los datos reales, pero solo cuando la entrada es lo suficientemente
+desfavorable para ese algoritmo. Bubblesort con $p$ pequeño es un
+recordatorio de que el "peor caso" no siempre es el caso relevante.
+
+De los cuatro algoritmos, Mergesort es la opción más confiable cuando
+no se sabe nada sobre el orden de la entrada: su número de comparaciones
+varía muy poco entre todos los valores de $p$ probados. El costo es la
+memoria auxiliar, que en esta actividad no fue un problema pero sí
+podría serlo en contextos con recursos limitados.
+
+Quicksort con pivote aleatorio resultó ser el más rápido en la mayoría
+de los escenarios, lo que explica por qué sigue siendo el algoritmo
+preferido en implementaciones reales como la función `sort` de la
+biblioteca estándar de muchos lenguajes. Sin embargo, hay que tener
+presente que el peor caso sigue siendo $O(n^2)$; la aleatoriedad solo
+hace que sea muy improbable, no imposible [@Cormen22].
+
+Algo que no era tan evidente antes de hacer el experimento es que
+Heapsort, a pesar de tener las mismas cotas teóricas que Mergesort y
+Quicksort, quedara consistentemente más lento en la práctica. El efecto
+del caché es un factor que no aparece en la notación $O$ pero que se
+nota claramente al medir tiempos reales.
+
+Finalmente, la medida de inversiones resultó útil para entender *por
+qué* los arreglos con $p$ pequeño son fáciles: incluso $p = 512$ está
+lejos del desorden total, lo que significa que todos los arreglos tienen
+bastante estructura residual. En un conjunto de datos verdaderamente
+aleatorio, la ventaja de Bubblesort desaparecería por completo
+[@Estivill92; @Loeser74].
+
+## Referencias {.unnumbered}
+
+::: {#refs}
+:::
