@@ -1,0 +1,466 @@
+---
+title: "Unidad 2 — Comparación de Órdenes de Crecimiento"
+subtitle: "Análisis empírico de complejidad temporal"
+author: "Mario Galván Rosales"
+date: today
+lang: es-MX
+engine: julia
+julia:
+  exeflags: ["--project=.."]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{julia}
+#| echo: false
+#| label: setup
+#| output: false
+ENV["GKSwstype"] = "100"
+using Plots
+using Printf
+using DataFrames
+gr()
+
+const NANOSEGUNDO = 1e-9
+valores_n = [100, 1000, 10000, 100000]
+
+function format_number(n)
+    if n >= 1e15
+        return @sprintf("%.2e", n)
+    end
+    str = string(Int(floor(n)))
+    len = length(str)
+    result = ""
+    for (i, c) in enumerate(str)
+        if i > 1 && (len - i + 1) % 3 == 0
+            result *= ","
+        end
+        result *= c
+    end
+    return result
+end
+
+function formato_tiempo(segundos)
+    if segundos < 1e-6
+        return @sprintf("%.2f ns", segundos * 1e9)
+    elseif segundos < 1e-3
+        return @sprintf("%.2f μs", segundos * 1e6)
+    elseif segundos < 1
+        return @sprintf("%.2f ms", segundos * 1e3)
+    elseif segundos < 60
+        return @sprintf("%.2f seg", segundos)
+    elseif segundos < 3600
+        return @sprintf("%.2f min", segundos / 60)
+    elseif segundos < 86400
+        return @sprintf("%.2f hrs", segundos / 3600)
+    elseif segundos < 31536000
+        return @sprintf("%.2f días", segundos / 86400)
+    else
+        return @sprintf("%.2e años", segundos / 31536000)
+    end
+end
+```
+
+# Introducción
+
+Siempre me había preguntado por qué en las clases de programación insisten tanto en la "complejidad" de los algoritmos. Si el programa funciona y da el resultado correcto, ¿qué importa si tarda un poco más?
+
+Pues resulta que sí importa, y mucho. Haciendo este ejercicio me di cuenta de que "un poco más" puede ser la diferencia entre esperar un segundo o esperar literalmente miles de años. Suena exagerado pero los números lo demuestran.
+
+En este trabajo voy a comparar diferentes órdenes de crecimiento usando la notación O grande. La idea es asumir que cada operación básica tarda **1 nanosegundo** y ver qué pasa cuando aumentamos el tamaño de la entrada.
+
+Los pares que voy a comparar son:
+
+- O(1) vs O(log n)
+- O(n) vs O(n log n)  
+- O(n²) vs O(n³)
+- O(2ⁿ) vs O(n!)
+- O(n!) vs O(nⁿ)
+
+Para las primeras tres comparaciones uso n = 100, 1000, 10000 y 100000. Para las últimas dos tuve que usar valores más pequeños porque los números resultantes son demasiado grandes para tener sentido práctico (más adelante explico por qué).
+
+# Comparación 1: O(1) vs O(log n)
+
+## Explicación
+
+**O(1)** significa que no importa el tamaño de la entrada, siempre tardas lo mismo. Es como cuando accedes a un elemento de un arreglo por su índice: da igual si el arreglo tiene 10 o 10 millones de elementos, ir a la posición 5 siempre toma el mismo tiempo.
+
+**O(log n)** es lo que ocurre con la búsqueda binaria. Cada paso descarta la mitad de los datos, entonces para encontrar algo entre 1000 elementos solo necesitas aproximadamente 10 comparaciones (porque 2^10 = 1024). Para un millón de elementos serían unas 20 comparaciones. Crece muy lento.
+
+## Funciones y gráfica
+```{julia}
+O_1(n) = 1
+O_log_n(n) = n > 0 ? log2(n) : 0
+```
+```{julia}
+n_vals = 1:1000
+
+plot(n_vals, [O_1(n) for n in n_vals], 
+     label="O(1)", linestyle=:dash, linewidth=2)
+plot!(n_vals, [O_log_n(n) for n in n_vals], 
+      label="O(log n)", linewidth=2)
+
+xlabel!("n")
+ylabel!("Operaciones")
+title!("O(1) vs O(log n)")
+```
+
+## Resultados
+```{julia}
+println("Comparación O(1) vs O(log n)")
+println("="^70)
+@printf("%-10s %-10s %-12s %-12s %-12s\n", 
+        "n", "O(1)", "Tiempo", "O(log n)", "Tiempo")
+println("-"^70)
+
+for n in valores_n
+    ops_1 = O_1(n)
+    ops_log = O_log_n(n)
+    t1 = ops_1 * NANOSEGUNDO
+    t2 = ops_log * NANOSEGUNDO
+    
+    @printf("%-10s %-10d %-12s %-12.2f %-12s\n", 
+            format_number(n), ops_1, formato_tiempo(t1), 
+            ops_log, formato_tiempo(t2))
+end
+```
+
+## Observaciones
+
+La línea de O(1) es completamente plana, como era de esperarse. Lo interesante es que O(log n) aunque sí crece, lo hace tan lentamente que para n = 100,000 apenas llega a 17 operaciones. Ambos son prácticamente instantáneos en la práctica.
+
+# Comparación 2: O(n) vs O(n log n)
+
+## Explicación
+
+**O(n)** es cuando tienes que revisar todos los elementos una vez. Si duplicas los datos, duplicas el tiempo. Es bastante intuitivo.
+
+**O(n log n)** es la complejidad típica de los algoritmos de ordenamiento eficientes como Merge Sort o Quick Sort. Es un poco más lento que O(n) pero sigue siendo muy eficiente.
+
+## Funciones y gráfica
+```{julia}
+O_n(n) = n
+O_n_log_n(n) = n > 0 ? n * log2(n) : 0
+```
+```{julia}
+n_vals = 1:1000
+
+plot(n_vals, [O_n(n) for n in n_vals], 
+     label="O(n)", linewidth=2)
+plot!(n_vals, [O_n_log_n(n) for n in n_vals], 
+      label="O(n log n)", linewidth=2)
+
+xlabel!("n")
+ylabel!("Operaciones")
+title!("O(n) vs O(n log n)")
+```
+
+## Resultados
+```{julia}
+println("Comparación O(n) vs O(n log n)")
+println("="^75)
+@printf("%-10s %-12s %-12s %-15s %-12s\n", 
+        "n", "O(n)", "Tiempo", "O(n log n)", "Tiempo")
+println("-"^75)
+
+for n in valores_n
+    ops_n = O_n(n)
+    ops_nlogn = O_n_log_n(n)
+    t1 = ops_n * NANOSEGUNDO
+    t2 = ops_nlogn * NANOSEGUNDO
+    
+    @printf("%-10s %-12s %-12s %-15s %-12s\n", 
+            format_number(n), format_number(ops_n), formato_tiempo(t1), 
+            format_number(ops_nlogn), formato_tiempo(t2))
+end
+```
+
+## Observaciones
+
+Las dos crecen de forma similar visualmente. Para n = 100,000, O(n) hace 100,000 operaciones y O(n log n) hace aproximadamente 1.6 millones. Parece mucha diferencia pero en tiempo real son 100 microsegundos vs 1.6 milisegundos. Ningún usuario notaría esa diferencia.
+
+Por eso nadie se queja de usar Merge Sort aunque sea O(n log n) en vez de algo teóricamente más rápido.
+
+# Comparación 3: O(n²) vs O(n³)
+
+## Explicación
+
+Aquí es donde empiezan los problemas. **O(n²)** aparece cuando tienes dos ciclos anidados (el clásico bubble sort por ejemplo). **O(n³)** aparece con tres ciclos anidados, como en la multiplicación de matrices con el algoritmo básico.
+
+## Funciones y gráfica
+```{julia}
+O_n2(n) = n^2
+O_n3(n) = n^3
+```
+```{julia}
+n_vals = 1:100
+
+plot(n_vals, [O_n2(n) for n in n_vals], 
+     label="O(n²)", linewidth=2)
+plot!(n_vals, [O_n3(n) for n in n_vals], 
+      label="O(n³)", linewidth=2)
+
+xlabel!("n")
+ylabel!("Operaciones")
+title!("O(n²) vs O(n³)")
+```
+
+## Resultados
+```{julia}
+println("Comparación O(n²) vs O(n³)")
+println("="^80)
+@printf("%-10s %-15s %-12s %-18s %-12s\n", 
+        "n", "O(n²)", "Tiempo", "O(n³)", "Tiempo")
+println("-"^80)
+
+for n in valores_n
+    ops_n2 = O_n2(n)
+    ops_n3 = O_n3(n)
+    t1 = Float64(ops_n2) * NANOSEGUNDO
+    t2 = Float64(ops_n3) * NANOSEGUNDO
+    
+    @printf("%-10s %-15s %-12s %-18s %-12s\n", 
+            format_number(n), format_number(Float64(ops_n2)), formato_tiempo(t1), 
+            format_number(Float64(ops_n3)), formato_tiempo(t2))
+end
+```
+
+## Observaciones
+
+Esto fue lo que más me llamó la atención. Para n = 100,000:
+
+- O(n²) tarda 10 segundos. Molesto pero tolerable.
+- O(n³) tarda **11.5 días**.
+
+Once días solo por agregar un ciclo más. Ahora entiendo por qué en clase insisten tanto en evitar ciclos anidados innecesarios.
+
+# Por qué no puedo usar n grande para las siguientes comparaciones
+
+Antes de continuar tengo que explicar algo importante. El ejercicio pide usar n = 100, 1000, 10000 y 100000 para todas las comparaciones, pero para O(2ⁿ), O(n!) y O(nⁿ) esto resulta imposible.
+
+No es por simplificar el trabajo, es que los números son tan grandes que pierden cualquier sentido práctico:
+```{julia}
+println("Veamos qué tan grandes son estos números:\n")
+
+for n in [20, 50, 100]
+    d_2n = length(string(BigInt(2)^n))
+    d_fact = length(string(factorial(BigInt(n))))
+    d_nn = length(string(BigInt(n)^n))
+    
+    println("n = $n:")
+    println("  2^n tiene $d_2n dígitos")
+    println("  n! tiene $d_fact dígitos")
+    println("  n^n tiene $d_nn dígitos")
+    println()
+end
+```
+
+Para dar una idea de la magnitud: se estima que hay 10^80 átomos en todo el universo observable. Eso es un número de 80 dígitos. Y 100! tiene 158 dígitos. Esto significa que 100! es un número mucho mayor que la cantidad de átomos del universo.
+```{julia}
+println("Si 2^100 operaciones tomaran 1 nanosegundo cada una:")
+ops = BigInt(2)^100
+tiempo = Float64(ops) * NANOSEGUNDO
+println("Tardaría: ", formato_tiempo(tiempo))
+println("\nPara referencia, el universo tiene aproximadamente 13,800 millones de años")
+```
+
+Por esta razón, para las comparaciones 4 y 5 voy a usar valores de n más pequeños.
+
+# Comparación 4: O(2ⁿ) vs O(n!)
+
+## Explicación
+
+**O(2ⁿ)** es lo que ocurre cuando tienes que probar todas las combinaciones posibles de n elementos que pueden estar en dos estados (encendido/apagado, sí/no). Con 10 elementos son 1024 combinaciones, con 20 son más de un millón.
+
+**O(n!)** aparece cuando tienes que probar todas las permutaciones posibles, como en el problema del viajante cuando quieres encontrar la ruta óptima visitando n ciudades.
+
+## Funciones y gráfica
+```{julia}
+O_2n(n) = BigInt(2)^n
+O_fact(n) = factorial(BigInt(n))
+```
+```{julia}
+n_vals = 1:14
+
+plot(n_vals, [Float64(O_2n(n)) for n in n_vals], 
+     label="O(2ⁿ)", linewidth=2, marker=:circle)
+plot!(n_vals, [Float64(O_fact(n)) for n in n_vals], 
+      label="O(n!)", linewidth=2, marker=:square)
+
+xlabel!("n")
+ylabel!("Operaciones (escala log)")
+title!("O(2ⁿ) vs O(n!)")
+yaxis!(:log)
+```
+
+## Resultados
+```{julia}
+valores_pequenos = [10, 15, 20, 25]
+
+println("Comparación O(2ⁿ) vs O(n!)")
+println("="^85)
+@printf("%-6s %-18s %-15s %-22s %-15s\n", 
+        "n", "O(2ⁿ)", "Tiempo", "O(n!)", "Tiempo")
+println("-"^85)
+
+for n in valores_pequenos
+    ops_2n = O_2n(n)
+    ops_fact = O_fact(n)
+    t1 = Float64(ops_2n) * NANOSEGUNDO
+    t2 = Float64(ops_fact) * NANOSEGUNDO
+    
+    @printf("%-6d %-18s %-15s %-22s %-15s\n", 
+            n, format_number(Float64(ops_2n)), formato_tiempo(t1), 
+            format_number(Float64(ops_fact)), formato_tiempo(t2))
+end
+```
+
+## Observaciones
+
+Los resultados de esta tabla son impresionantes. Para n = 20:
+
+- O(2ⁿ) tarda 1 milisegundo
+- O(n!) tarda **77 mil millones de años**
+
+No es error. 77 mil millones de años. El universo tiene aproximadamente 13 mil millones de años. Esto significa que para 20 ciudades, encontrar la ruta perfecta del viajante con fuerza bruta tomaría más de 5 veces la edad del universo.
+
+Ahora comprendo por qué existen las heurísticas y los algoritmos aproximados.
+
+# Comparación 5: O(n!) vs O(nⁿ)
+
+## Explicación
+
+Ya vimos que n! crece de manera extremadamente rápida. Pero nⁿ crece todavía más rápido.
+
+La diferencia radica en que en n! los factores van disminuyendo (5! = 5×4×3×2×1) mientras que en nⁿ todos los factores son el número más grande (5⁵ = 5×5×5×5×5).
+
+## Funciones y gráfica
+```{julia}
+O_nn(n) = BigInt(n)^n
+```
+```{julia}
+n_vals = 1:9
+
+plot(n_vals, [Float64(O_fact(n)) for n in n_vals], 
+     label="O(n!)", linewidth=2, marker=:circle)
+plot!(n_vals, [Float64(O_nn(n)) for n in n_vals], 
+      label="O(nⁿ)", linewidth=2, marker=:square)
+
+xlabel!("n")
+ylabel!("Operaciones (escala log)")
+title!("O(n!) vs O(nⁿ)")
+yaxis!(:log)
+```
+
+## Resultados
+```{julia}
+valores_muy_pequenos = [5, 8, 10, 12]
+
+println("Comparación O(n!) vs O(nⁿ)")
+println("="^85)
+@printf("%-6s %-18s %-15s %-22s %-15s\n", 
+        "n", "O(n!)", "Tiempo", "O(nⁿ)", "Tiempo")
+println("-"^85)
+
+for n in valores_muy_pequenos
+    ops_fact = O_fact(n)
+    ops_nn = O_nn(n)
+    t1 = Float64(ops_fact) * NANOSEGUNDO
+    t2 = Float64(ops_nn) * NANOSEGUNDO
+    
+    @printf("%-6d %-18s %-15s %-22s %-15s\n", 
+            n, format_number(Float64(ops_fact)), formato_tiempo(t1), 
+            format_number(Float64(ops_nn)), formato_tiempo(t2))
+end
+```
+
+## Observaciones
+
+Para n = 12:
+
+- O(n!) tarda medio segundo. Todavía usable.
+- O(nⁿ) tarda **24 días**.
+
+Medio segundo contra casi un mes. Y eso con n = 12, que es un valor bastante pequeño.
+
+# Discusión
+
+## Resumen de viabilidad
+
+| Orden | ¿Se puede usar? | Límite práctico |
+|-------|-----------------|-----------------|
+| O(1) | Siempre | Sin límite |
+| O(log n) | Siempre | Sin límite |
+| O(n) | Siempre | Millones |
+| O(n log n) | Siempre | Millones |
+| O(n²) | A veces | ~10,000 |
+| O(n³) | Casi nunca | ~1,000 |
+| O(2ⁿ) | No | ~30 |
+| O(n!) | No | ~15 |
+| O(nⁿ) | No | ~10 |
+
+## Implicaciones en aplicaciones reales
+
+**Bases de datos:** Con millones de registros, un algoritmo O(n²) tardaría días en hacer una consulta. Por eso las bases de datos utilizan índices que permiten búsquedas O(log n).
+
+**Machine Learning:** Entrenar algunos modelos puede ser O(n²) o O(n³), por eso se emplean técnicas como el muestreo o el procesamiento por lotes para no tener que procesar todo el conjunto de datos de una sola vez.
+
+**Optimización:** Problemas como el del viajante son O(n!) si se busca la solución exacta. Por eso en la práctica se usan aproximaciones que proporcionan una solución "suficientemente buena" en tiempo razonable.
+
+# Conclusiones
+
+Después de realizar todas estas comparaciones, me queda claro por qué la complejidad algorítmica es un tema central en el diseño de software. A continuación presento los puntos más importantes que pude observar:
+
+## Los órdenes O(1), O(log n), O(n) y O(n log n) son eficientes
+
+Estos órdenes de crecimiento permiten trabajar con conjuntos de datos grandes sin preocuparse por el tiempo de ejecución. Por ejemplo, con n = 100,000 elementos:
+
+- O(1) tarda 1 nanosegundo
+- O(log n) tarda 17 nanosegundos
+- O(n) tarda 100 microsegundos
+- O(n log n) tarda 1.6 milisegundos
+
+Todos estos tiempos son imperceptibles para el usuario. Esto explica por qué algoritmos como la búsqueda binaria O(log n) o los ordenamientos eficientes como Merge Sort O(n log n) son tan utilizados en la práctica: escalan muy bien incluso con millones de datos.
+
+## Los órdenes O(n²) y O(n³) requieren precaución
+
+Estos órdenes funcionan bien para datos pequeños, pero se vuelven problemáticos conforme n crece. La diferencia es notable:
+
+- Para n = 1,000: O(n²) tarda 1 milisegundo, O(n³) tarda 1 segundo
+- Para n = 10,000: O(n²) tarda 100 milisegundos, O(n³) tarda 16 minutos
+- Para n = 100,000: O(n²) tarda 10 segundos, O(n³) tarda 11.5 días
+
+Esto significa que un algoritmo O(n²) puede ser aceptable para procesar unos cuantos miles de registros, pero si los datos crecen a decenas de miles, el tiempo de espera se vuelve molesto. Y con O(n³), el límite práctico es todavía más bajo. Por esta razón, cuando se trabaja con grandes volúmenes de información, es importante buscar alternativas más eficientes o aceptar que el procesamiento tomará tiempo considerable.
+
+## Los órdenes O(2ⁿ), O(n!) y O(nⁿ) son imprácticos
+
+Estos órdenes crecen tan rápido que se vuelven inutilizables incluso para valores pequeños de n. Por esta razón no fue posible usar los valores de n = 100, 1000, 10000 y 100000 que pedía el ejercicio para las últimas comparaciones.
+
+Para ilustrar la magnitud del problema:
+
+- O(2²⁰) = 1 milisegundo (manejable)
+- O(20!) = 77 mil millones de años (imposible)
+- O(12¹²) = 24 días (impráctico)
+
+Estos números explican por qué problemas como el del viajante (que requiere evaluar todas las permutaciones posibles) no pueden resolverse de manera exacta para más de unas pocas decenas de elementos. En la práctica, se recurre a heurísticas y algoritmos aproximados que encuentran soluciones "suficientemente buenas" en tiempo razonable, sacrificando la garantía de optimalidad.
+
+## Elegir bien el algoritmo importa más que tener mejor hardware
+
+Una de las lecciones más importantes de este ejercicio es que ninguna mejora en hardware puede compensar un algoritmo ineficiente. 
+
+Por ejemplo, supongamos que tenemos un algoritmo O(2ⁿ) y compramos una computadora 1000 veces más rápida. Esto solo nos permitiría aumentar n en aproximadamente 10 unidades (porque 2¹⁰ ≈ 1000). En cambio, si encontramos un algoritmo O(n²) para el mismo problema, podríamos manejar valores de n mucho mayores incluso en una computadora modesta.
+
+Esto tiene implicaciones directas en el desarrollo de software: antes de invertir en mejor infraestructura, conviene revisar si el algoritmo utilizado es el más adecuado para el problema.
+
+## Reflexión final
+
+Lo que más me llamó la atención de este ejercicio fue observar cómo agregar un simple ciclo anidado puede convertir un programa que tarda segundos en uno que tarda días. La diferencia entre O(n²) y O(n³) no parece tan grande cuando se escribe en papel, pero en la práctica representa la diferencia entre un programa usable y uno que nunca termina.
+
+Definitivamente, este ejercicio me hizo valorar la importancia de analizar la complejidad antes de implementar una solución. A veces el código más simple o más obvio no es el más adecuado cuando se trabaja con grandes cantidades de datos.
+
+# Referencias
+
+- Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009). *Introduction to Algorithms* (3rd ed.). MIT Press.
+- Material del curso: Capítulo 2 - Introducción al análisis de algoritmos con Julia.

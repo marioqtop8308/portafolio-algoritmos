@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es-MX" xml:lang="es-MX"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Galván Rosales">
+
+<title>Unidad 1 — Máquina de Turing – Reportes del curso Análisis de Algoritmos</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-13079fa3d5316e09fe6a45a284d214a8.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Reportes del curso Análisis de Algoritmos</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Sobre esta página</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-unidades" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Unidades</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-unidades">    
+        <li>
+    <a class="dropdown-item" href="../unidad-1/index.html">
+ <span class="dropdown-text">Unidad 1 — Máquina de Turing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../unidad-2/index.html">
+ <span class="dropdown-text">Unidad 2 — Órdenes de crecimiento</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../unidad-3/index.html">
+ <span class="dropdown-text">Unidad 3 — Estructuras de datos elementales</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../unidad-4/index.html">
+ <span class="dropdown-text">Unidad 4 — Algoritmos de ordenamiento</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../unidad-5/index.html">
+ <span class="dropdown-text">Unidad 5 — Búsqueda por comparación</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../unidad-6/index.html">
+ <span class="dropdown-text">Unidad 6 — Intersección de conjuntos</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/marioqtop8308/portafolio-algoritmos"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text">Repositorio</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../unidad-1/index.html">Unidades publicadas</a></li><li class="breadcrumb-item"><a href="../unidad-1/index.html">Unidad 1 — Máquina de Turing</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Información</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar sección">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sobre esta página</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unidades publicadas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar sección">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-1/index.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Unidad 1 — Máquina de Turing</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-2/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unidad 2 — Órdenes de crecimiento</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-3/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unidad 3 — Estructuras de datos elementales</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-4/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unidad 4 — Algoritmos de ordenamiento</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-5/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unidad 5 — Búsqueda por comparación</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../unidad-6/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unidad 6 — Intersección de conjuntos</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción">Introducción</a></li>
+  <li><a href="#planteamiento-del-problema" id="toc-planteamiento-del-problema" class="nav-link" data-scroll-target="#planteamiento-del-problema">Planteamiento del problema</a></li>
+  <li><a href="#definición-formal-de-la-máquina" id="toc-definición-formal-de-la-máquina" class="nav-link" data-scroll-target="#definición-formal-de-la-máquina">Definición formal de la máquina</a>
+  <ul class="collapse">
+  <li><a href="#conjunto-de-estados-q" id="toc-conjunto-de-estados-q" class="nav-link" data-scroll-target="#conjunto-de-estados-q">Conjunto de Estados <span class="math inline">\(Q\)</span></a></li>
+  <li><a href="#alfabeto-de-entrada-sigma" id="toc-alfabeto-de-entrada-sigma" class="nav-link" data-scroll-target="#alfabeto-de-entrada-sigma">Alfabeto de Entrada <span class="math inline">\(\Sigma\)</span></a></li>
+  <li><a href="#alfabeto-de-la-cinta-gamma" id="toc-alfabeto-de-la-cinta-gamma" class="nav-link" data-scroll-target="#alfabeto-de-la-cinta-gamma">Alfabeto de la Cinta <span class="math inline">\(\Gamma\)</span></a></li>
+  <li><a href="#estado-inicial-s" id="toc-estado-inicial-s" class="nav-link" data-scroll-target="#estado-inicial-s">Estado Inicial <span class="math inline">\(s\)</span></a></li>
+  <li><a href="#símbolo-blanco-epsilon" id="toc-símbolo-blanco-epsilon" class="nav-link" data-scroll-target="#símbolo-blanco-epsilon">Símbolo Blanco <span class="math inline">\(\epsilon\)</span></a></li>
+  <li><a href="#conjunto-de-estados-finales-f" id="toc-conjunto-de-estados-finales-f" class="nav-link" data-scroll-target="#conjunto-de-estados-finales-f">Conjunto de Estados Finales <span class="math inline">\(F\)</span></a></li>
+  <li><a href="#función-de-transición-delta" id="toc-función-de-transición-delta" class="nav-link" data-scroll-target="#función-de-transición-delta">Función de Transición <span class="math inline">\(\delta\)</span></a></li>
+  </ul></li>
+  <li><a href="#función-de-transición-delta-1" id="toc-función-de-transición-delta-1" class="nav-link" data-scroll-target="#función-de-transición-delta-1">Función de Transición <span class="math inline">\(\delta\)</span></a>
+  <ul class="collapse">
+  <li><a href="#leyenda-de-símbolos" id="toc-leyenda-de-símbolos" class="nav-link" data-scroll-target="#leyenda-de-símbolos">Leyenda de símbolos</a></li>
+  <li><a href="#tabla-de-transiciones" id="toc-tabla-de-transiciones" class="nav-link" data-scroll-target="#tabla-de-transiciones">Tabla de Transiciones</a></li>
+  </ul></li>
+  <li><a href="#explicación-del-funcionamiento" id="toc-explicación-del-funcionamiento" class="nav-link" data-scroll-target="#explicación-del-funcionamiento">Explicación del funcionamiento</a>
+  <ul class="collapse">
+  <li><a href="#representación-de-los-números" id="toc-representación-de-los-números" class="nav-link" data-scroll-target="#representación-de-los-números">Representación de los números</a></li>
+  <li><a href="#analogía-del-funcionamiento" id="toc-analogía-del-funcionamiento" class="nav-link" data-scroll-target="#analogía-del-funcionamiento">Analogía del funcionamiento</a></li>
+  <li><a href="#las-3-fases-del-algoritmo" id="toc-las-3-fases-del-algoritmo" class="nav-link" data-scroll-target="#las-3-fases-del-algoritmo">Las 3 fases del algoritmo</a>
+  <ul class="collapse">
+  <li><a href="#fase-1-preparar-el-espacio-de-trabajo" id="toc-fase-1-preparar-el-espacio-de-trabajo" class="nav-link" data-scroll-target="#fase-1-preparar-el-espacio-de-trabajo">FASE 1: Preparar el espacio de trabajo</a></li>
+  <li><a href="#fase-2-multiplicar-por-3" id="toc-fase-2-multiplicar-por-3" class="nav-link" data-scroll-target="#fase-2-multiplicar-por-3">FASE 2: Multiplicar por 3</a></li>
+  <li><a href="#fase-3-sumar-1" id="toc-fase-3-sumar-1" class="nav-link" data-scroll-target="#fase-3-sumar-1">FASE 3: Sumar 1</a></li>
+  </ul></li>
+  <li><a href="#resumen-visual-para-n-2" id="toc-resumen-visual-para-n-2" class="nav-link" data-scroll-target="#resumen-visual-para-n-2">Resumen visual para n = 2</a></li>
+  <li><a href="#análisis-matemático" id="toc-análisis-matemático" class="nav-link" data-scroll-target="#análisis-matemático">Análisis matemático</a></li>
+  </ul></li>
+  <li><a href="#ejecución-paso-a-paso-para-n-3" id="toc-ejecución-paso-a-paso-para-n-3" class="nav-link" data-scroll-target="#ejecución-paso-a-paso-para-n-3">Ejecución paso a paso para n = 3</a>
+  <ul class="collapse">
+  <li><a href="#entrada-inicial" id="toc-entrada-inicial" class="nav-link" data-scroll-target="#entrada-inicial">Entrada inicial</a></li>
+  <li><a href="#fase-1-preparar-el-espacio-de-trabajo-1" id="toc-fase-1-preparar-el-espacio-de-trabajo-1" class="nav-link" data-scroll-target="#fase-1-preparar-el-espacio-de-trabajo-1">FASE 1: Preparar el espacio de trabajo</a></li>
+  <li><a href="#fase-2-multiplicar-por-3-1" id="toc-fase-2-multiplicar-por-3-1" class="nav-link" data-scroll-target="#fase-2-multiplicar-por-3-1">FASE 2: Multiplicar por 3</a>
+  <ul class="collapse">
+  <li><a href="#procesamiento-del-primer-1" id="toc-procesamiento-del-primer-1" class="nav-link" data-scroll-target="#procesamiento-del-primer-1">Procesamiento del primer “1”</a></li>
+  <li><a href="#procesamiento-del-segundo-1" id="toc-procesamiento-del-segundo-1" class="nav-link" data-scroll-target="#procesamiento-del-segundo-1">Procesamiento del segundo “1”</a></li>
+  <li><a href="#procesamiento-del-tercer-1" id="toc-procesamiento-del-tercer-1" class="nav-link" data-scroll-target="#procesamiento-del-tercer-1">Procesamiento del tercer “1”</a></li>
+  </ul></li>
+  <li><a href="#fase-3-sumar-1-1" id="toc-fase-3-sumar-1-1" class="nav-link" data-scroll-target="#fase-3-sumar-1-1">FASE 3: Sumar +1</a></li>
+  <li><a href="#resultado-final" id="toc-resultado-final" class="nav-link" data-scroll-target="#resultado-final">Resultado Final</a></li>
+  <li><a href="#resumen-de-la-ejecución" id="toc-resumen-de-la-ejecución" class="nav-link" data-scroll-target="#resumen-de-la-ejecución">Resumen de la ejecución</a></li>
+  </ul></li>
+  <li><a href="#conclusión" id="toc-conclusión" class="nav-link" data-scroll-target="#conclusión">Conclusión</a></li>
+  <li><a href="#referencias" id="toc-referencias" class="nav-link" data-scroll-target="#referencias">Referencias</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../unidad-1/index.html">Unidades publicadas</a></li><li class="breadcrumb-item"><a href="../unidad-1/index.html">Unidad 1 — Máquina de Turing</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Unidad 1 — Máquina de Turing</h1>
+<p class="subtitle lead">Codificación matemática para calcular f(n) = 3n + 1</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Autor/a</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Galván Rosales </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Fecha de publicación</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">20 de mayo de 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level1">
+<h1>Introducción</h1>
+<p>Las <strong>máquinas de Turing</strong> son uno de los conceptos más importantes en la teoría de la computación. Fueron propuestas por <strong>Alan Turing en 1936</strong>, mucho antes de que existieran las computadoras modernas, y siguen siendo fundamentales para entender cómo funcionan los algoritmos y qué problemas pueden ser resueltos mediante un proceso computacional.</p>
+<p>En este trabajo presento la codificación matemática de una máquina de Turing que calcula la función <span class="math inline">\(f(n) = 3n + 1\)</span>. Para lograr esto, fue necesario definir formalmente todos los componentes de la máquina:</p>
+<ul>
+<li>El conjunto de estados</li>
+<li>Los alfabetos de entrada y de cinta</li>
+<li>El estado inicial</li>
+<li>El símbolo blanco</li>
+<li>Los estados de aceptación</li>
+<li>La función de transición</li>
+</ul>
+<p>El objetivo es mostrar cómo una operación aritmética aparentemente sencilla puede ser implementada mediante un modelo de cómputo tan básico como la máquina de Turing, utilizando únicamente operaciones elementales de <strong>lectura</strong>, <strong>escritura</strong> y <strong>movimiento</strong> sobre una cinta. Para facilitar la comprensión, incluyo un ejemplo detallado del funcionamiento de la máquina con una entrada específica.</p>
+</section>
+<section id="planteamiento-del-problema" class="level1">
+<h1>Planteamiento del problema</h1>
+<p>Codificar de manera matemática (definición de estados y <span class="math inline">\(\delta\)</span>) una máquina de Turing que calcule la expresión <span class="math inline">\(3n + 1\)</span>.</p>
+<div class="cell" data-fig-width="60%" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-turing-actividad" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-turing-actividad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="NaN" height="480" viewbox="0.00 0.00 1491.38 440.65" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 436.65)">
+<title>Turing3nPlus1</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-436.65 1487.38,-436.65 1487.38,4 -4,4"></polygon>
+<!-- start -->
+<g id="node1" class="node">
+<title>start</title>
+<text text-anchor="middle" x="27" y="-125.22" font-family="Helvetica,sans-Serif" font-size="14.00">Inicio</text>
+</g>
+<!-- q0 -->
+<g id="node2" class="node">
+<title>q0</title>
+<ellipse fill="none" stroke="black" cx="146.32" cy="-129.42" rx="55.14" ry="55.14"></ellipse>
+<text text-anchor="middle" x="146.32" y="-133.62" font-family="Helvetica,sans-Serif" font-size="14.00">q0</text>
+<text text-anchor="middle" x="146.32" y="-116.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Ir al final)</text>
+</g>
+<!-- start&#45;&gt;q0 -->
+<g id="edge1" class="edge">
+<title>start-&gt;q0</title>
+<path fill="none" stroke="black" d="M54.04,-129.42C61.97,-129.42 71.07,-129.42 80.38,-129.42"></path>
+<polygon fill="black" stroke="black" points="80.52,-132.92 90.52,-129.42 80.52,-125.92 80.52,-132.92"></polygon>
+</g>
+<!-- q0&#45;&gt;q0 -->
+<g id="edge2" class="edge">
+<title>q0-&gt;q0</title>
+<path fill="none" stroke="black" d="M133.29,-183.46C134.67,-194.68 139.01,-202.74 146.32,-202.74 151.23,-202.74 154.81,-199.1 157.04,-193.31"></path>
+<polygon fill="black" stroke="black" points="160.47,-193.99 159.35,-183.46 153.66,-192.39 160.47,-193.99"></polygon>
+<text text-anchor="middle" x="146.32" y="-206.94" font-family="Times,serif" font-size="14.00">1 -&gt; 1, R</text>
+</g>
+<!-- q1 -->
+<g id="node3" class="node">
+<title>q1</title>
+<ellipse fill="none" stroke="black" cx="358.03" cy="-129.42" rx="71.05" ry="71.05"></ellipse>
+<text text-anchor="middle" x="358.03" y="-133.62" font-family="Helvetica,sans-Serif" font-size="14.00">q1</text>
+<text text-anchor="middle" x="358.03" y="-116.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Volver inicio)</text>
+</g>
+<!-- q0&#45;&gt;q1 -->
+<g id="edge3" class="edge">
+<title>q0-&gt;q1</title>
+<path fill="none" stroke="black" d="M201.87,-129.42C224.59,-129.42 251.44,-129.42 276.36,-129.42"></path>
+<polygon fill="black" stroke="black" points="276.53,-132.92 286.53,-129.42 276.53,-125.92 276.53,-132.92"></polygon>
+<text text-anchor="middle" x="244.19" y="-133.62" font-family="Times,serif" font-size="14.00">_ -&gt; #, L</text>
+</g>
+<!-- q1&#45;&gt;q1 -->
+<g id="edge4" class="edge">
+<title>q1-&gt;q1</title>
+<path fill="none" stroke="black" d="M338.26,-197.92C340.83,-210.15 347.42,-218.7 358.03,-218.7 365.49,-218.7 370.96,-214.47 374.44,-207.71"></path>
+<polygon fill="black" stroke="black" points="377.87,-208.51 377.79,-197.92 371.24,-206.25 377.87,-208.51"></polygon>
+<text text-anchor="middle" x="358.03" y="-222.9" font-family="Times,serif" font-size="14.00">1 -&gt; 1, L</text>
+</g>
+<!-- q2 -->
+<g id="node4" class="node">
+<title>q2</title>
+<ellipse fill="none" stroke="black" cx="574.93" cy="-129.42" rx="59.96" ry="59.96"></ellipse>
+<text text-anchor="middle" x="574.93" y="-133.62" font-family="Helvetica,sans-Serif" font-size="14.00">q2</text>
+<text text-anchor="middle" x="574.93" y="-116.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Escanear)</text>
+</g>
+<!-- q1&#45;&gt;q2 -->
+<g id="edge5" class="edge">
+<title>q1-&gt;q2</title>
+<path fill="none" stroke="black" d="M429.39,-129.42C453.6,-129.42 480.67,-129.42 504.78,-129.42"></path>
+<polygon fill="black" stroke="black" points="504.91,-132.92 514.91,-129.42 504.91,-125.92 504.91,-132.92"></polygon>
+<text text-anchor="middle" x="472.25" y="-133.62" font-family="Times,serif" font-size="14.00">_ -&gt; _, R</text>
+</g>
+<!-- q2&#45;&gt;q2 -->
+<g id="edge6" class="edge">
+<title>q2-&gt;q2</title>
+<path fill="none" stroke="black" d="M556.42,-186.36C558.3,-198.43 564.47,-207.15 574.93,-207.15 582.28,-207.15 587.51,-202.84 590.63,-196.09"></path>
+<polygon fill="black" stroke="black" points="594.02,-196.94 593.43,-186.36 587.3,-195 594.02,-196.94"></polygon>
+<text text-anchor="middle" x="574.93" y="-211.35" font-family="Times,serif" font-size="14.00">X -&gt; X, R</text>
+</g>
+<!-- q3 -->
+<g id="node5" class="node">
+<title>q3</title>
+<ellipse fill="none" stroke="black" cx="784.76" cy="-303.42" rx="60.65" ry="60.65"></ellipse>
+<text text-anchor="middle" x="784.76" y="-307.62" font-family="Helvetica,sans-Serif" font-size="14.00">q3</text>
+<text text-anchor="middle" x="784.76" y="-290.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Ir a salida)</text>
+</g>
+<!-- q2&#45;&gt;q3 -->
+<g id="edge7" class="edge">
+<title>q2-&gt;q3</title>
+<path fill="none" stroke="black" d="M621.28,-167.39C653.13,-194.05 695.87,-229.84 729.52,-258.01"></path>
+<polygon fill="black" stroke="black" points="727.51,-260.89 737.43,-264.63 732.01,-255.53 727.51,-260.89"></polygon>
+<text text-anchor="middle" x="679.16" y="-240.62" font-family="Times,serif" font-size="14.00">1 -&gt; X, R</text>
+</g>
+<!-- q8 -->
+<g id="node9" class="node">
+<title>q8</title>
+<ellipse fill="none" stroke="black" cx="784.76" cy="-129.42" rx="61.2" ry="61.2"></ellipse>
+<text text-anchor="middle" x="784.76" y="-133.62" font-family="Helvetica,sans-Serif" font-size="14.00">q8</text>
+<text text-anchor="middle" x="784.76" y="-116.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Sumar +1)</text>
+</g>
+<!-- q2&#45;&gt;q8 -->
+<g id="edge8" class="edge">
+<title>q2-&gt;q8</title>
+<path fill="none" stroke="black" d="M634.93,-129.42C659.29,-129.42 687.74,-129.42 713.2,-129.42"></path>
+<polygon fill="black" stroke="black" points="713.53,-132.92 723.53,-129.42 713.53,-125.92 713.53,-132.92"></polygon>
+<text text-anchor="middle" x="679.16" y="-133.62" font-family="Times,serif" font-size="14.00"># -&gt; #, R</text>
+</g>
+<!-- q3&#45;&gt;q3 -->
+<g id="edge9" class="edge">
+<title>q3-&gt;q3</title>
+<path fill="none" stroke="black" d="M765.95,-361.51C767.93,-373.57 774.2,-382.25 784.76,-382.25 792.19,-382.25 797.49,-377.96 800.68,-371.22"></path>
+<polygon fill="black" stroke="black" points="804.07,-372.1 803.58,-361.51 797.36,-370.09 804.07,-372.1"></polygon>
+<text text-anchor="middle" x="784.76" y="-420.05" font-family="Times,serif" font-size="14.00">1 -&gt; 1, R</text>
+<text text-anchor="middle" x="784.76" y="-403.25" font-family="Times,serif" font-size="14.00"># -&gt; #, R</text>
+<text text-anchor="middle" x="784.76" y="-386.45" font-family="Times,serif" font-size="14.00">X -&gt; X, R</text>
+</g>
+<!-- q4 -->
+<g id="node6" class="node">
+<title>q4</title>
+<ellipse fill="none" stroke="black" cx="1000.98" cy="-299.42" rx="64.83" ry="64.83"></ellipse>
+<text text-anchor="middle" x="1000.98" y="-303.62" font-family="Helvetica,sans-Serif" font-size="14.00">q4</text>
+<text text-anchor="middle" x="1000.98" y="-286.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Escribir 1º)</text>
+</g>
+<!-- q3&#45;&gt;q4 -->
+<g id="edge10" class="edge">
+<title>q3-&gt;q4</title>
+<path fill="none" stroke="black" d="M845.72,-302.3C870.63,-301.84 899.8,-301.29 926.02,-300.8"></path>
+<polygon fill="black" stroke="black" points="926.36,-304.3 936.3,-300.61 926.23,-297.3 926.36,-304.3"></polygon>
+<text text-anchor="middle" x="888.81" y="-305.62" font-family="Times,serif" font-size="14.00">_ -&gt; 1, R</text>
+</g>
+<!-- q5 -->
+<g id="node7" class="node">
+<title>q5</title>
+<ellipse fill="none" stroke="black" cx="1220.77" cy="-214.42" rx="64.83" ry="64.83"></ellipse>
+<text text-anchor="middle" x="1220.77" y="-218.62" font-family="Helvetica,sans-Serif" font-size="14.00">q5</text>
+<text text-anchor="middle" x="1220.77" y="-201.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Escribir 2º)</text>
+</g>
+<!-- q4&#45;&gt;q5 -->
+<g id="edge11" class="edge">
+<title>q4-&gt;q5</title>
+<path fill="none" stroke="black" d="M1061.49,-276.2C1089.1,-265.42 1122.08,-252.55 1150.78,-241.35"></path>
+<polygon fill="black" stroke="black" points="1152.28,-244.52 1160.33,-237.62 1149.74,-238 1152.28,-244.52"></polygon>
+<text text-anchor="middle" x="1113.15" y="-268.62" font-family="Times,serif" font-size="14.00">_ -&gt; 1, R</text>
+</g>
+<!-- q7 -->
+<g id="node8" class="node">
+<title>q7</title>
+<ellipse fill="none" stroke="black" cx="1426.96" cy="-56.42" rx="56.34" ry="56.34"></ellipse>
+<text text-anchor="middle" x="1426.96" y="-60.62" font-family="Helvetica,sans-Serif" font-size="14.00">q7</text>
+<text text-anchor="middle" x="1426.96" y="-43.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Retornar)</text>
+</g>
+<!-- q5&#45;&gt;q7 -->
+<g id="edge12" class="edge">
+<title>q5-&gt;q7</title>
+<path fill="none" stroke="black" d="M1272.5,-175.16C1303.3,-151.34 1342.52,-120.99 1373.6,-96.94"></path>
+<polygon fill="black" stroke="black" points="1375.96,-99.54 1381.73,-90.65 1371.68,-94 1375.96,-99.54"></polygon>
+<text text-anchor="middle" x="1327.98" y="-153.62" font-family="Times,serif" font-size="14.00">_ -&gt; 1, L</text>
+</g>
+<!-- q7&#45;&gt;q2 -->
+<g id="edge14" class="edge">
+<title>q7-&gt;q2</title>
+<path fill="none" stroke="black" d="M1370.59,-49.73C1329.56,-45.35 1272.26,-40.42 1221.77,-40.42 783.76,-40.42 783.76,-40.42 783.76,-40.42 729.46,-40.42 673.15,-66.42 632.86,-90.31"></path>
+<polygon fill="black" stroke="black" points="631,-87.34 624.26,-95.52 634.62,-93.33 631,-87.34"></polygon>
+<text text-anchor="middle" x="1000.98" y="-44.62" font-family="Times,serif" font-size="14.00">X -&gt; X, R</text>
+</g>
+<!-- q7&#45;&gt;q7 -->
+<g id="edge13" class="edge">
+<title>q7-&gt;q7</title>
+<path fill="none" stroke="black" d="M1409.03,-109.94C1410.65,-122.01 1416.63,-130.84 1426.96,-130.84 1434.23,-130.84 1439.34,-126.48 1442.3,-119.69"></path>
+<polygon fill="black" stroke="black" points="1445.7,-120.5 1444.89,-109.94 1438.94,-118.71 1445.7,-120.5"></polygon>
+<text text-anchor="middle" x="1426.96" y="-151.84" font-family="Times,serif" font-size="14.00">1 -&gt; 1, L</text>
+<text text-anchor="middle" x="1426.96" y="-135.04" font-family="Times,serif" font-size="14.00"># -&gt; #, L</text>
+</g>
+<!-- q8&#45;&gt;q8 -->
+<g id="edge15" class="edge">
+<title>q8-&gt;q8</title>
+<path fill="none" stroke="black" d="M765.95,-187.72C767.93,-199.82 774.2,-208.52 784.76,-208.52 792.19,-208.52 797.49,-204.22 800.68,-197.46"></path>
+<polygon fill="black" stroke="black" points="804.08,-198.3 803.58,-187.72 797.37,-196.3 804.08,-198.3"></polygon>
+<text text-anchor="middle" x="784.76" y="-212.72" font-family="Times,serif" font-size="14.00">1 -&gt; 1, R</text>
+</g>
+<!-- q_halt -->
+<g id="node10" class="node">
+<title>q_halt</title>
+<ellipse fill="lightgreen" stroke="black" cx="1000.98" cy="-144.42" rx="65.44" ry="65.44"></ellipse>
+<ellipse fill="none" stroke="black" cx="1000.98" cy="-144.42" rx="69.45" ry="69.45"></ellipse>
+<text text-anchor="middle" x="1000.98" y="-148.62" font-family="Helvetica,sans-Serif" font-size="14.00">Halt</text>
+<text text-anchor="middle" x="1000.98" y="-131.82" font-family="Helvetica,sans-Serif" font-size="14.00">(Terminado)</text>
+</g>
+<!-- q8&#45;&gt;q_halt -->
+<g id="edge16" class="edge">
+<title>q8-&gt;q_halt</title>
+<path fill="none" stroke="black" d="M845.72,-133.62C869.22,-135.27 896.5,-137.18 921.53,-138.93"></path>
+<polygon fill="black" stroke="black" points="921.51,-142.44 931.73,-139.64 922,-135.45 921.51,-142.44"></polygon>
+<text text-anchor="middle" x="888.81" y="-142.62" font-family="Times,serif" font-size="14.00">_ -&gt; 1, S</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-turing-actividad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Máquina de Turing que calcula <span class="math inline">\(3n + 1\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="definición-formal-de-la-máquina" class="level1">
+<h1>Definición formal de la máquina</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Definición Formal">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Definición Formal
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La máquina de Turing que calcula <span class="math inline">\(3n + 1\)</span> se define como la tupla de 7 elementos:</p>
+<p><span class="math display">\[M = (Q, \Sigma, \Gamma, s, \epsilon, F, \delta)\]</span></p>
+</div>
+</div>
+<section id="conjunto-de-estados-q" class="level2">
+<h2 class="anchored" data-anchor-id="conjunto-de-estados-q">Conjunto de Estados <span class="math inline">\(Q\)</span></h2>
+<p><span class="math display">\[Q = \{q_0, q_1, q_2, q_3, q_4, q_5, q_7, q_8, q_{halt}\}\]</span></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Estado</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(q_0\)</span></td>
+<td>Ir al final de la entrada</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_1\)</span></td>
+<td>Volver al inicio</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_2\)</span></td>
+<td>Escanear entrada</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_3\)</span></td>
+<td>Ir a zona de salida</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_4\)</span></td>
+<td>Escribir primer 1 del triplete</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_5\)</span></td>
+<td>Escribir segundo 1 del triplete</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_7\)</span></td>
+<td>Retornar a buscar siguiente símbolo</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_8\)</span></td>
+<td>Sumar el +1 final</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_{halt}\)</span></td>
+<td>Estado de aceptación (terminado)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="alfabeto-de-entrada-sigma" class="level2">
+<h2 class="anchored" data-anchor-id="alfabeto-de-entrada-sigma">Alfabeto de Entrada <span class="math inline">\(\Sigma\)</span></h2>
+<p><span class="math display">\[\Sigma = \{1\}\]</span></p>
+<p>Los números se representan en sistema unario: el número <span class="math inline">\(n\)</span> se representa como <span class="math inline">\(n\)</span> unos consecutivos.</p>
+</section>
+<section id="alfabeto-de-la-cinta-gamma" class="level2">
+<h2 class="anchored" data-anchor-id="alfabeto-de-la-cinta-gamma">Alfabeto de la Cinta <span class="math inline">\(\Gamma\)</span></h2>
+<p><span class="math display">\[\Gamma = \{1, X, \#, \_\}\]</span></p>
+<p>Donde:</p>
+<ul>
+<li><span class="math inline">\(1\)</span> = símbolo de entrada/salida (representa unidades)</li>
+<li><span class="math inline">\(X\)</span> = marca para símbolos ya procesados</li>
+<li><span class="math inline">\(\#\)</span> = separador entre entrada y salida</li>
+<li><span class="math inline">\(\_\)</span> = blanco (espacio vacío)</li>
+</ul>
+</section>
+<section id="estado-inicial-s" class="level2">
+<h2 class="anchored" data-anchor-id="estado-inicial-s">Estado Inicial <span class="math inline">\(s\)</span></h2>
+<p><span class="math display">\[s = q_0\]</span></p>
+</section>
+<section id="símbolo-blanco-epsilon" class="level2">
+<h2 class="anchored" data-anchor-id="símbolo-blanco-epsilon">Símbolo Blanco <span class="math inline">\(\epsilon\)</span></h2>
+<p><span class="math display">\[\epsilon = \_\]</span></p>
+</section>
+<section id="conjunto-de-estados-finales-f" class="level2">
+<h2 class="anchored" data-anchor-id="conjunto-de-estados-finales-f">Conjunto de Estados Finales <span class="math inline">\(F\)</span></h2>
+<p><span class="math display">\[F = \{q_{halt}\}\]</span></p>
+</section>
+<section id="función-de-transición-delta" class="level2">
+<h2 class="anchored" data-anchor-id="función-de-transición-delta">Función de Transición <span class="math inline">\(\delta\)</span></h2>
+<p><span class="math display">\[\delta : Q \times \Gamma \rightarrow Q \times \Gamma \times \{L, R, S\}\]</span></p>
+</section>
+</section>
+<section id="función-de-transición-delta-1" class="level1">
+<h1>Función de Transición <span class="math inline">\(\delta\)</span></h1>
+<p>Cada transición tiene el formato: <span class="math inline">\(\delta(\text{estado\_actual}, \text{símbolo\_leído}) = (\text{estado\_siguiente}, \text{símbolo\_escrito}, \text{movimiento})\)</span></p>
+<p><strong>Desde <span class="math inline">\(q_0\)</span> (Ir al final):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_0, 1) = (q_0, 1, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_0, \_) = (q_1, \#, L)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_1\)</span> (Volver al inicio):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_1, 1) = (q_1, 1, L)\)</span></li>
+<li><span class="math inline">\(\delta(q_1, \_) = (q_2, \_, R)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_2\)</span> (Escanear entrada):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_2, X) = (q_2, X, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_2, 1) = (q_3, X, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_2, \#) = (q_8, \#, R)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_3\)</span> (Ir a zona de salida):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_3, 1) = (q_3, 1, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_3, \#) = (q_3, \#, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_3, X) = (q_3, X, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_3, \_) = (q_4, 1, R)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_4\)</span> (Escribir primer 1):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_4, \_) = (q_5, 1, R)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_5\)</span> (Escribir segundo 1):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_5, \_) = (q_7, 1, L)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_7\)</span> (Retornar):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_7, 1) = (q_7, 1, L)\)</span></li>
+<li><span class="math inline">\(\delta(q_7, \#) = (q_7, \#, L)\)</span></li>
+<li><span class="math inline">\(\delta(q_7, X) = (q_2, X, R)\)</span></li>
+</ul>
+<p><strong>Desde <span class="math inline">\(q_8\)</span> (Sumar el +1):</strong></p>
+<ul>
+<li><span class="math inline">\(\delta(q_8, 1) = (q_8, 1, R)\)</span></li>
+<li><span class="math inline">\(\delta(q_8, \_) = (q_{halt}, 1, S)\)</span></li>
+</ul>
+<section id="leyenda-de-símbolos" class="level2">
+<h2 class="anchored" data-anchor-id="leyenda-de-símbolos">Leyenda de símbolos</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Símbolo</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">R</td>
+<td>Mover cabezal a la <strong>derecha</strong> (Right)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">L</td>
+<td>Mover cabezal a la <strong>izquierda</strong> (Left)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">S</td>
+<td><strong>Quedarse</strong> en la misma posición (Stay)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">_</td>
+<td>Espacio en blanco (celda vacía)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">#</td>
+<td>Separador entre entrada y salida</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">X</td>
+<td>Marca de símbolo ya procesado</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td>Símbolo unitario (representa cantidad en unario)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tabla-de-transiciones" class="level2">
+<h2 class="anchored" data-anchor-id="tabla-de-transiciones">Tabla de Transiciones</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_4\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_4\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_5\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_5\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\#\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(X\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\_\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q_{halt}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(S\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="explicación-del-funcionamiento" class="level1">
+<h1>Explicación del funcionamiento</h1>
+<p>Esta máquina de Turing recibe un número <strong>n</strong> y calcula el resultado de la operación <strong>3n + 1</strong>.</p>
+<p>Por ejemplo:</p>
+<ul>
+<li>Si n = 2, el resultado es: 3(2) + 1 = <strong>7</strong></li>
+<li>Si n = 3, el resultado es: 3(3) + 1 = <strong>10</strong></li>
+</ul>
+<section id="representación-de-los-números" class="level2">
+<h2 class="anchored" data-anchor-id="representación-de-los-números">Representación de los números</h2>
+<p>La máquina usa el <strong>sistema unario</strong>, donde el número <strong>n</strong> se representa escribiendo <strong>n veces</strong> el símbolo “1”:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Número decimal</th>
+<th style="text-align: center;">Representación unaria</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">111</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">1111</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">11111</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="analogía-del-funcionamiento" class="level2">
+<h2 class="anchored" data-anchor-id="analogía-del-funcionamiento">Analogía del funcionamiento</h2>
+<p>Para entender mejor el proceso, podemos pensar en una <strong>banda transportadora</strong> con casillas. Un trabajador (el <strong>cabezal</strong>) puede:</p>
+<ul>
+<li>Leer lo que hay en una casilla</li>
+<li>Escribir algo nuevo en esa casilla</li>
+<li>Moverse un paso a la izquierda o a la derecha</li>
+</ul>
+<p>El trabajador sigue <strong>instrucciones específicas</strong> según lo que lee y el “modo” en que está trabajando (su <strong>estado</strong>).</p>
+</section>
+<section id="las-3-fases-del-algoritmo" class="level2">
+<h2 class="anchored" data-anchor-id="las-3-fases-del-algoritmo">Las 3 fases del algoritmo</h2>
+<section id="fase-1-preparar-el-espacio-de-trabajo" class="level3">
+<h3 class="anchored" data-anchor-id="fase-1-preparar-el-espacio-de-trabajo">FASE 1: Preparar el espacio de trabajo</h3>
+<p><em>(Estados <span class="math inline">\(q_0\)</span> y <span class="math inline">\(q_1\)</span>)</em></p>
+<p>El cabezal recorre la cinta hacia la derecha hasta encontrar el final de los números, coloca un separador # para dividir la zona de entrada y la zona de salida, y regresa al inicio.</p>
+<p><strong>Ejemplo con n = 2:</strong></p>
+<pre><code>Inicio:     [1][1][_][_][_][_][_][_]...
+                  ↑ cabezal aquí
+
+Después:    [1][1][#][_][_][_][_][_]...
+             ↑ cabezal regresa al inicio</code></pre>
+</section>
+<section id="fase-2-multiplicar-por-3" class="level3">
+<h3 class="anchored" data-anchor-id="fase-2-multiplicar-por-3">FASE 2: Multiplicar por 3</h3>
+<p><em>(Estados <span class="math inline">\(q_2\)</span>, <span class="math inline">\(q_3\)</span>, <span class="math inline">\(q_4\)</span>, <span class="math inline">\(q_5\)</span>, <span class="math inline">\(q_7\)</span>)</em></p>
+<p>Por cada “1” que encuentra en la entrada:</p>
+<ol type="1">
+<li>Lo marca con una <strong>X</strong> (para recordar que ya lo procesó)</li>
+<li>Va a la zona de salida (después del #)</li>
+<li>Escribe <strong>tres “1”</strong> (porque estamos multiplicando por 3)</li>
+<li>Regresa a buscar el siguiente “1” sin marcar</li>
+<li>Repite hasta que no queden “1” sin marcar</li>
+</ol>
+<p><strong>Ejemplo con n = 2 (paso a paso):</strong></p>
+<pre><code>Paso 1 - Encuentra el primer "1" y lo marca:
+[1][1][#][_][_][_][_]...
+ ↓
+[X][1][#][_][_][_][_]...
+
+Paso 2 - Va a la zona de salida y escribe tres "1":
+[X][1][#][1][1][1][_]...
+
+Paso 3 - Regresa y encuentra el segundo "1", lo marca:
+[X][1][#][1][1][1][_]...
+    ↓
+[X][X][#][1][1][1][_]...
+
+Paso 4 - Va a la zona de salida y escribe otros tres "1":
+[X][X][#][1][1][1][1][1][1][_]...
+
+Ya no hay más "1" sin marcar, pasamos a la siguiente fase.</code></pre>
+<p><strong>Resultado parcial:</strong> Tenemos seis “1” en la salida (que es <span class="math inline">\(3 \times 2 = 6\)</span>)</p>
+</section>
+<section id="fase-3-sumar-1" class="level3">
+<h3 class="anchored" data-anchor-id="fase-3-sumar-1">FASE 3: Sumar 1</h3>
+<p><em>(Estado <span class="math inline">\(q_8\)</span>)</em></p>
+<p>Cuando ya no hay más “1” para procesar, el cabezal encuentra el separador #, se mueve al final de la zona de salida, escribe <strong>un “1” adicional</strong> (esta es la parte “+1” de la fórmula) y termina.</p>
+<p><strong>Ejemplo con n = 2 (continuación):</strong></p>
+<pre><code>Antes de sumar:
+[X][X][#][1][1][1][1][1][1][_]...
+                           ↑ va al final
+
+Después de sumar +1:
+[X][X][#][1][1][1][1][1][1][1]
+                           ↑ escribe un "1" más
+
+Resultado final: 7 unos = 7 en decimal</code></pre>
+</section>
+</section>
+<section id="resumen-visual-para-n-2" class="level2">
+<h2 class="anchored" data-anchor-id="resumen-visual-para-n-2">Resumen visual para n = 2</h2>
+<pre><code>ENTRADA: n = 2  →  [1][1]
+
+FASE 1 (Preparar):
+[1][1][_]  →  [1][1][#][_][_][_][_][_][_]
+
+FASE 2 (Multiplicar por 3):
+Procesar primer "1":   [X][1][#][1][1][1][_][_][_]
+Procesar segundo "1":  [X][X][#][1][1][1][1][1][1]
+
+FASE 3 (Sumar 1):
+[X][X][#][1][1][1][1][1][1][1]
+        └───────┬───────┘
+              7 unos
+
+SALIDA: 7 unos = 7 en decimal
+
+Verificación: 3(2) + 1 = 6 + 1 = 7 ✓</code></pre>
+</section>
+<section id="análisis-matemático" class="level2">
+<h2 class="anchored" data-anchor-id="análisis-matemático">Análisis matemático</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Operación</th>
+<th>Cómo lo hace la máquina</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>×3</td>
+<td>Por cada “1” de entrada, escribe tres “1” en la salida</td>
+</tr>
+<tr class="even">
+<td>+1</td>
+<td>Al final, escribe un “1” extra</td>
+</tr>
+</tbody>
+</table>
+<p>Si tienes <strong>n</strong> unos de entrada:</p>
+<ul>
+<li>Fase 2 produce: <strong>3n</strong> unos</li>
+<li>Fase 3 agrega: <strong>1</strong> uno más</li>
+<li><strong>Total: 3n + 1 unos</strong></li>
+</ul>
+</section>
+</section>
+<section id="ejecución-paso-a-paso-para-n-3" class="level1">
+<h1>Ejecución paso a paso para n = 3</h1>
+<p>A continuación se muestra cómo la máquina procesa la entrada <strong>n = 3</strong> utilizando la tabla de transiciones.</p>
+<section id="entrada-inicial" class="level2">
+<h2 class="anchored" data-anchor-id="entrada-inicial">Entrada inicial</h2>
+<p>En sistema unario, <strong>n = 3</strong> se representa como: <strong>1 1 1</strong></p>
+<pre><code>Cinta inicial:  [1][1][1][_][_][_][_][_][_][_][_][_]...
+                 ↑</code></pre>
+<p>cabezal (estado <span class="math inline">\(q_0\)</span>)</p>
+<p><strong>Resultado esperado:</strong> 3(3) + 1 = <strong>10</strong> (diez unos en la salida)</p>
+</section>
+<section id="fase-1-preparar-el-espacio-de-trabajo-1" class="level2">
+<h2 class="anchored" data-anchor-id="fase-1-preparar-el-espacio-de-trabajo-1">FASE 1: Preparar el espacio de trabajo</h2>
+<p><strong>Paso 1</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<p>Estoy en <span class="math inline">\(q_0\)</span>, leo <strong>1</strong>, me quedo en <span class="math inline">\(q_0\)</span>, escribo 1, me muevo a la <strong>derecha</strong>.</p>
+<pre><code>[1][1][1][_][_]...
+    ↑</code></pre>
+<p><span class="math inline">\(q_0\)</span></p>
+<p><strong>Paso 2</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[1][1][1][_][_]...
+       ↑</code></pre>
+<p><span class="math inline">\(q_0\)</span></p>
+<p><strong>Paso 3</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[1][1][1][_][_]...
+          ↑</code></pre>
+<p><span class="math inline">\(q_0\)</span></p>
+<p><strong>Paso 4</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_0\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">#</td>
+<td style="text-align: center;">L</td>
+</tr>
+</tbody>
+</table>
+<p>Estoy en <span class="math inline">\(q_0\)</span>, leo <strong>vacío (_)</strong>, cambio a <span class="math inline">\(q_1\)</span>, escribo <strong>#</strong>, me muevo a la <strong>izquierda</strong>.</p>
+<pre><code>[1][1][1][#][_]...
+       ↑</code></pre>
+<p><span class="math inline">\(q_1\)</span></p>
+<p><strong>Paso 5</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">L</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[1][1][1][#][_]...
+    ↑</code></pre>
+<p><span class="math inline">\(q_1\)</span></p>
+<p><strong>Paso 6</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">L</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[1][1][1][#][_]...
+ ↑</code></pre>
+<p><span class="math inline">\(q_1\)</span></p>
+<p><strong>Paso 7</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">L</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][1][1][1][#][_]...
+ ↑</code></pre>
+<p><span class="math inline">\(q_1\)</span></p>
+<p><strong>Paso 8</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_1\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<p>Estoy en <span class="math inline">\(q_1\)</span>, leo <strong>vacío</strong>, cambio a <span class="math inline">\(q_2\)</span>, me muevo a la <strong>derecha</strong>.</p>
+<pre><code>[_][1][1][1][#][_]...
+    ↑</code></pre>
+<p><span class="math inline">\(q_2\)</span></p>
+<p><strong>Fin de Fase 1:</strong> El separador # está colocado y el cabezal está al inicio.</p>
+</section>
+<section id="fase-2-multiplicar-por-3-1" class="level2">
+<h2 class="anchored" data-anchor-id="fase-2-multiplicar-por-3-1">FASE 2: Multiplicar por 3</h2>
+<section id="procesamiento-del-primer-1" class="level3">
+<h3 class="anchored" data-anchor-id="procesamiento-del-primer-1">Procesamiento del primer “1”</h3>
+<p><strong>Paso 9</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<p>Estoy en <span class="math inline">\(q_2\)</span>, leo 1, cambio a <span class="math inline">\(q_3\)</span>, escribo X (marco como procesado), me muevo a la derecha.</p>
+<pre><code>[_][X][1][1][#][_][_][_][_]...
+       ↑</code></pre>
+<p><span class="math inline">\(q_3\)</span></p>
+<p><strong>Pasos 10-12: Avanzar hasta zona de salida</strong></p>
+<div class="line-block"><span class="math inline">\(q_3\)</span> | 1 | <span class="math inline">\(q_3\)</span> | 1 | R |<br>
+<span class="math inline">\(q_3\)</span> | 1 | <span class="math inline">\(q_3\)</span> | 1 | R |<br>
+<span class="math inline">\(q_3\)</span> | # | <span class="math inline">\(q_3\)</span> | # | R |</div>
+<pre><code>[_][X][1][1][#][_][_][_][_]...
+                ↑</code></pre>
+<p><span class="math inline">\(q_3\)</span></p>
+<p><strong>Paso 13: Escribir primer “1” del triplete</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_3\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_4\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][X][1][1][#][1][_][_][_]...
+                   ↑</code></pre>
+<p><span class="math inline">\(q_4\)</span></p>
+<p><strong>Paso 14: Escribir segundo “1” del triplete</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_4\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_5\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][X][1][1][#][1][1][_][_]...
+                      ↑</code></pre>
+<p><span class="math inline">\(q_5\)</span></p>
+<p><strong>Paso 15: Escribir tercer “1” del triplete</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_5\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">L</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][X][1][1][#][1][1][1][_]...
+                      ↑</code></pre>
+<p><span class="math inline">\(q_7\)</span></p>
+<p><strong>Primer “1” procesado:</strong> Se escribieron 3 unos. Ahora regresa a buscar el siguiente.</p>
+<p><strong>Pasos 16-20: Regresar al inicio</strong></p>
+<p>El cabezal regresa hacia la izquierda (estado <span class="math inline">\(q_7\)</span>) hasta encontrar la X:</p>
+<pre><code>[_][X][1][1][#][1][1][1][_]...
+    ↑</code></pre>
+<p><span class="math inline">\(q_7\)</span></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_7\)</span></td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][X][1][1][#][1][1][1][_]...
+       ↑</code></pre>
+<p><span class="math inline">\(q_2\)</span></p>
+</section>
+<section id="procesamiento-del-segundo-1" class="level3">
+<h3 class="anchored" data-anchor-id="procesamiento-del-segundo-1">Procesamiento del segundo “1”</h3>
+<p><strong>Marcar el segundo “1”</strong></p>
+<div class="line-block"><span class="math inline">\(q_2\)</span> | 1 | <span class="math inline">\(q_3\)</span> | X | R |</div>
+<pre><code>[_][X][X][1][#][1][1][1][_]...
+          ↑</code></pre>
+<p><span class="math inline">\(q_3\)</span></p>
+<p><strong>Escribir otros 3 unos en la salida</strong></p>
+<p>Siguiendo el mismo proceso:</p>
+<pre><code>[_][X][X][1][#][1][1][1][1][1][1][_]...</code></pre>
+<p><strong>Segundo “1” procesado:</strong> Ahora hay 6 unos en la salida.</p>
+</section>
+<section id="procesamiento-del-tercer-1" class="level3">
+<h3 class="anchored" data-anchor-id="procesamiento-del-tercer-1">Procesamiento del tercer “1”</h3>
+<p><strong>Marcar el tercer “1”</strong></p>
+<div class="line-block"><span class="math inline">\(q_2\)</span> | 1 | <span class="math inline">\(q_3\)</span> | X | R |</div>
+<pre><code>[_][X][X][X][#][1][1][1][1][1][1][_]...</code></pre>
+<p><strong>Escribir otros 3 unos en la salida</strong></p>
+<pre><code>[_][X][X][X][#][1][1][1][1][1][1][1][1][1][_]...</code></pre>
+<p><strong>Tercer “1” procesado:</strong> Ahora hay 9 unos en la salida (<span class="math inline">\(3 \times 3 = 9\)</span>).</p>
+</section>
+</section>
+<section id="fase-3-sumar-1-1" class="level2">
+<h2 class="anchored" data-anchor-id="fase-3-sumar-1-1">FASE 3: Sumar +1</h2>
+<p>El cabezal regresa y encuentra el separador #:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: center;">#</td>
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;">#</td>
+<td style="text-align: center;">R</td>
+</tr>
+</tbody>
+</table>
+<p>Ya no hay más 1’s que procesar, paso a <span class="math inline">\(q_8\)</span> para sumar el +1.</p>
+<pre><code>[_][X][X][X][#][1][1][1][1][1][1][1][1][1][_]...
+                                          ↑</code></pre>
+<p><span class="math inline">\(q_8\)</span></p>
+<p><strong>Paso final: Escribir el “+1”</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Estado Actual</th>
+<th style="text-align: center;">Símbolo Leído</th>
+<th style="text-align: center;">Estado Siguiente</th>
+<th style="text-align: center;">Símbolo Escrito</th>
+<th style="text-align: center;">Movimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(q_8\)</span></td>
+<td style="text-align: center;">_</td>
+<td style="text-align: center;"><span class="math inline">\(q_{halt}\)</span></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">S</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[_][X][X][X][#][1][1][1][1][1][1][1][1][1][1]
+                                          ↑</code></pre>
+<p><span class="math inline">\(q_{halt}\)</span> (FIN)</p>
+</section>
+<section id="resultado-final" class="level2">
+<h2 class="anchored" data-anchor-id="resultado-final">Resultado Final</h2>
+<pre><code>Entrada:  [1][1][1]                        →  3 unos = 3 en decimal
+
+Salida:   [1][1][1][1][1][1][1][1][1][1]   →  10 unos = 10 en decimal</code></pre>
+<p><strong>Verificación:</strong> $3(3) + 1 = 9 + 1 = $ <strong>10</strong> ✓</p>
+</section>
+<section id="resumen-de-la-ejecución" class="level2">
+<h2 class="anchored" data-anchor-id="resumen-de-la-ejecución">Resumen de la ejecución</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Fase</th>
+<th>Acción</th>
+<th>Contenido de la cinta (zona de salida)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td>Preparar</td>
+<td>(vacío)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2a</td>
+<td>Procesar 1er “1”</td>
+<td>111</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">2b</td>
+<td>Procesar 2do “1”</td>
+<td>111111</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2c</td>
+<td>Procesar 3er “1”</td>
+<td>111111111</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td>Sumar +1</td>
+<td>1111111111</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="conclusión" class="level1">
+<h1>Conclusión</h1>
+<p>Al realizar este ejercicio pude comprender de mejor manera cómo funciona una máquina de Turing y por qué se considera un modelo fundamental en la teoría de la computación. Aunque al principio resultaba complicado traducir una operación matemática como <span class="math inline">\(3n + 1\)</span> a un conjunto de estados y transiciones, al ir desglosando el problema en fases más pequeñas (<strong>preparar el espacio</strong>, <strong>multiplicar por 3</strong> y <strong>sumar 1</strong>) el proceso se volvió más claro.</p>
+<p>Algo que me resultó interesante es que la máquina <strong>no realiza la multiplicación de manera directa</strong> como lo haríamos nosotros. En lugar de eso, utiliza un proceso repetitivo donde por cada símbolo de la entrada escribe tres símbolos en la salida, lo cual al final produce el mismo resultado. Esto me hizo reflexionar sobre cómo las computadoras ejecutan las operaciones que para nosotros resultan tan naturales.</p>
+<p>También comprendí la importancia de usar un <strong>sistema de representación adecuado</strong>. El sistema unario, aunque poco eficiente para números grandes, resulta práctico para este tipo de ejercicios porque simplifica las operaciones a conteos y copias de símbolos.</p>
+</section>
+<section id="referencias" class="level1">
+<h1>Referencias</h1>
+<ul>
+<li>Turing, A. M. (1936). On Computable Numbers, with an Application to the Entscheidungsproblem. <em>Proceedings of the London Mathematical Society</em>.</li>
+<li>Material del curso: Capítulo 2 - Introducción al análisis de algoritmos con Julia.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Mario Galván Rosales · INFOTEC</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Hecho con <a href="https://quarto.org">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

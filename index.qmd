@@ -33,6 +33,26 @@ en la barra superior.
 
 A medida que avanzo en el curso voy agregando más unidades aquí.
 
+### Unidad 1 — Máquina de Turing
+
+Codificación matemática de una máquina de Turing que calcula la función
+$f(n) = 3n + 1$. Se definen formalmente los componentes del modelo
+—conjunto de estados, alfabetos, función de transición— y se ilustra
+el funcionamiento paso a paso sobre una entrada concreta en notación
+unaria.
+
+[Ir al reporte →](unidad-1/index.qmd){.btn-portafolio}
+
+### Unidad 2 — Comparación de órdenes de crecimiento
+
+Análisis empírico y visual de cómo escalan distintas complejidades
+temporales ($O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$,
+$O(2^n)$, $O(n!)$) en función del tamaño de entrada. Se calculan los
+tiempos teóricos esperados para tamaños $n \in \{100, 10^3, 10^4, 10^5\}$
+y se discute por qué la notación asintótica importa en la práctica.
+
+[Ir al reporte →](unidad-2/index.qmd){.btn-portafolio}
+
 ### Unidad 3 — Estructuras de datos elementales
 
 Comparación de dos enfoques algorítmicos para resolver el problema del

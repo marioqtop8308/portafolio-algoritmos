@@ -252,6 +252,342 @@
     ]
   },
   {
+    "objectID": "unidad-2/index.html",
+    "href": "unidad-2/index.html",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "",
+    "text": "Siempre me había preguntado por qué en las clases de programación insisten tanto en la “complejidad” de los algoritmos. Si el programa funciona y da el resultado correcto, ¿qué importa si tarda un poco más?\nPues resulta que sí importa, y mucho. Haciendo este ejercicio me di cuenta de que “un poco más” puede ser la diferencia entre esperar un segundo o esperar literalmente miles de años. Suena exagerado pero los números lo demuestran.\nEn este trabajo voy a comparar diferentes órdenes de crecimiento usando la notación O grande. La idea es asumir que cada operación básica tarda 1 nanosegundo y ver qué pasa cuando aumentamos el tamaño de la entrada.\nLos pares que voy a comparar son:\n\nO(1) vs O(log n)\nO(n) vs O(n log n)\n\nO(n²) vs O(n³)\nO(2ⁿ) vs O(n!)\nO(n!) vs O(nⁿ)\n\nPara las primeras tres comparaciones uso n = 100, 1000, 10000 y 100000. Para las últimas dos tuve que usar valores más pequeños porque los números resultantes son demasiado grandes para tener sentido práctico (más adelante explico por qué).",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#explicación",
+    "href": "unidad-2/index.html#explicación",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Explicación",
+    "text": "Explicación\nO(1) significa que no importa el tamaño de la entrada, siempre tardas lo mismo. Es como cuando accedes a un elemento de un arreglo por su índice: da igual si el arreglo tiene 10 o 10 millones de elementos, ir a la posición 5 siempre toma el mismo tiempo.\nO(log n) es lo que ocurre con la búsqueda binaria. Cada paso descarta la mitad de los datos, entonces para encontrar algo entre 1000 elementos solo necesitas aproximadamente 10 comparaciones (porque 2^10 = 1024). Para un millón de elementos serían unas 20 comparaciones. Crece muy lento.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#funciones-y-gráfica",
+    "href": "unidad-2/index.html#funciones-y-gráfica",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Funciones y gráfica",
+    "text": "Funciones y gráfica\n\nO_1(n) = 1\nO_log_n(n) = n &gt; 0 ? log2(n) : 0\n\nO_log_n (generic function with 1 method)\n\n\n\nn_vals = 1:1000\n\nplot(n_vals, [O_1(n) for n in n_vals], \n     label=\"O(1)\", linestyle=:dash, linewidth=2)\nplot!(n_vals, [O_log_n(n) for n in n_vals], \n      label=\"O(log n)\", linewidth=2)\n\nxlabel!(\"n\")\nylabel!(\"Operaciones\")\ntitle!(\"O(1) vs O(log n)\")",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resultados",
+    "href": "unidad-2/index.html#resultados",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resultados",
+    "text": "Resultados\n\nprintln(\"Comparación O(1) vs O(log n)\")\nprintln(\"=\"^70)\n@printf(\"%-10s %-10s %-12s %-12s %-12s\\n\", \n        \"n\", \"O(1)\", \"Tiempo\", \"O(log n)\", \"Tiempo\")\nprintln(\"-\"^70)\n\nfor n in valores_n\n    ops_1 = O_1(n)\n    ops_log = O_log_n(n)\n    t1 = ops_1 * NANOSEGUNDO\n    t2 = ops_log * NANOSEGUNDO\n    \n    @printf(\"%-10s %-10d %-12s %-12.2f %-12s\\n\", \n            format_number(n), ops_1, formato_tiempo(t1), \n            ops_log, formato_tiempo(t2))\nend\n\nComparación O(1) vs O(log n)\n======================================================================\nn          O(1)       Tiempo       O(log n)     Tiempo      \n----------------------------------------------------------------------\n100        1          1.00 ns      6.64         6.64 ns     \n1,000      1          1.00 ns      9.97         9.97 ns     \n10,000     1          1.00 ns      13.29        13.29 ns    \n100,000    1          1.00 ns      16.61        16.61 ns",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#observaciones",
+    "href": "unidad-2/index.html#observaciones",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Observaciones",
+    "text": "Observaciones\nLa línea de O(1) es completamente plana, como era de esperarse. Lo interesante es que O(log n) aunque sí crece, lo hace tan lentamente que para n = 100,000 apenas llega a 17 operaciones. Ambos son prácticamente instantáneos en la práctica.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#explicación-1",
+    "href": "unidad-2/index.html#explicación-1",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Explicación",
+    "text": "Explicación\nO(n) es cuando tienes que revisar todos los elementos una vez. Si duplicas los datos, duplicas el tiempo. Es bastante intuitivo.\nO(n log n) es la complejidad típica de los algoritmos de ordenamiento eficientes como Merge Sort o Quick Sort. Es un poco más lento que O(n) pero sigue siendo muy eficiente.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#funciones-y-gráfica-1",
+    "href": "unidad-2/index.html#funciones-y-gráfica-1",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Funciones y gráfica",
+    "text": "Funciones y gráfica\n\nO_n(n) = n\nO_n_log_n(n) = n &gt; 0 ? n * log2(n) : 0\n\nO_n_log_n (generic function with 1 method)\n\n\n\nn_vals = 1:1000\n\nplot(n_vals, [O_n(n) for n in n_vals], \n     label=\"O(n)\", linewidth=2)\nplot!(n_vals, [O_n_log_n(n) for n in n_vals], \n      label=\"O(n log n)\", linewidth=2)\n\nxlabel!(\"n\")\nylabel!(\"Operaciones\")\ntitle!(\"O(n) vs O(n log n)\")",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resultados-1",
+    "href": "unidad-2/index.html#resultados-1",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resultados",
+    "text": "Resultados\n\nprintln(\"Comparación O(n) vs O(n log n)\")\nprintln(\"=\"^75)\n@printf(\"%-10s %-12s %-12s %-15s %-12s\\n\", \n        \"n\", \"O(n)\", \"Tiempo\", \"O(n log n)\", \"Tiempo\")\nprintln(\"-\"^75)\n\nfor n in valores_n\n    ops_n = O_n(n)\n    ops_nlogn = O_n_log_n(n)\n    t1 = ops_n * NANOSEGUNDO\n    t2 = ops_nlogn * NANOSEGUNDO\n    \n    @printf(\"%-10s %-12s %-12s %-15s %-12s\\n\", \n            format_number(n), format_number(ops_n), formato_tiempo(t1), \n            format_number(ops_nlogn), formato_tiempo(t2))\nend\n\nComparación O(n) vs O(n log n)\n===========================================================================\nn          O(n)         Tiempo       O(n log n)      Tiempo      \n---------------------------------------------------------------------------\n100        100          100.00 ns    664             664.39 ns   \n1,000      1,000        1.00 μs      9,965           9.97 μs     \n10,000     10,000       10.00 μs     132,877         132.88 μs   \n100,000    100,000      100.00 μs    1,660,964       1.66 ms",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#observaciones-1",
+    "href": "unidad-2/index.html#observaciones-1",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Observaciones",
+    "text": "Observaciones\nLas dos crecen de forma similar visualmente. Para n = 100,000, O(n) hace 100,000 operaciones y O(n log n) hace aproximadamente 1.6 millones. Parece mucha diferencia pero en tiempo real son 100 microsegundos vs 1.6 milisegundos. Ningún usuario notaría esa diferencia.\nPor eso nadie se queja de usar Merge Sort aunque sea O(n log n) en vez de algo teóricamente más rápido.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#explicación-2",
+    "href": "unidad-2/index.html#explicación-2",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Explicación",
+    "text": "Explicación\nAquí es donde empiezan los problemas. O(n²) aparece cuando tienes dos ciclos anidados (el clásico bubble sort por ejemplo). O(n³) aparece con tres ciclos anidados, como en la multiplicación de matrices con el algoritmo básico.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#funciones-y-gráfica-2",
+    "href": "unidad-2/index.html#funciones-y-gráfica-2",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Funciones y gráfica",
+    "text": "Funciones y gráfica\n\nO_n2(n) = n^2\nO_n3(n) = n^3\n\nO_n3 (generic function with 1 method)\n\n\n\nn_vals = 1:100\n\nplot(n_vals, [O_n2(n) for n in n_vals], \n     label=\"O(n²)\", linewidth=2)\nplot!(n_vals, [O_n3(n) for n in n_vals], \n      label=\"O(n³)\", linewidth=2)\n\nxlabel!(\"n\")\nylabel!(\"Operaciones\")\ntitle!(\"O(n²) vs O(n³)\")",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resultados-2",
+    "href": "unidad-2/index.html#resultados-2",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resultados",
+    "text": "Resultados\n\nprintln(\"Comparación O(n²) vs O(n³)\")\nprintln(\"=\"^80)\n@printf(\"%-10s %-15s %-12s %-18s %-12s\\n\", \n        \"n\", \"O(n²)\", \"Tiempo\", \"O(n³)\", \"Tiempo\")\nprintln(\"-\"^80)\n\nfor n in valores_n\n    ops_n2 = O_n2(n)\n    ops_n3 = O_n3(n)\n    t1 = Float64(ops_n2) * NANOSEGUNDO\n    t2 = Float64(ops_n3) * NANOSEGUNDO\n    \n    @printf(\"%-10s %-15s %-12s %-18s %-12s\\n\", \n            format_number(n), format_number(Float64(ops_n2)), formato_tiempo(t1), \n            format_number(Float64(ops_n3)), formato_tiempo(t2))\nend\n\nComparación O(n²) vs O(n³)\n================================================================================\nn          O(n²)           Tiempo       O(n³)              Tiempo      \n--------------------------------------------------------------------------------\n100        10,000          10.00 μs     1,000,000          1.00 ms     \n1,000      1,000,000       1.00 ms      1,000,000,000      1.00 seg    \n10,000     100,000,000     100.00 ms    1,000,000,000,000  16.67 min   \n100,000    10,000,000,000  10.00 seg    1.00e+15           11.57 días",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#observaciones-2",
+    "href": "unidad-2/index.html#observaciones-2",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Observaciones",
+    "text": "Observaciones\nEsto fue lo que más me llamó la atención. Para n = 100,000:\n\nO(n²) tarda 10 segundos. Molesto pero tolerable.\nO(n³) tarda 11.5 días.\n\nOnce días solo por agregar un ciclo más. Ahora entiendo por qué en clase insisten tanto en evitar ciclos anidados innecesarios.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#explicación-3",
+    "href": "unidad-2/index.html#explicación-3",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Explicación",
+    "text": "Explicación\nO(2ⁿ) es lo que ocurre cuando tienes que probar todas las combinaciones posibles de n elementos que pueden estar en dos estados (encendido/apagado, sí/no). Con 10 elementos son 1024 combinaciones, con 20 son más de un millón.\nO(n!) aparece cuando tienes que probar todas las permutaciones posibles, como en el problema del viajante cuando quieres encontrar la ruta óptima visitando n ciudades.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#funciones-y-gráfica-3",
+    "href": "unidad-2/index.html#funciones-y-gráfica-3",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Funciones y gráfica",
+    "text": "Funciones y gráfica\n\nO_2n(n) = BigInt(2)^n\nO_fact(n) = factorial(BigInt(n))\n\nO_fact (generic function with 1 method)\n\n\n\nn_vals = 1:14\n\nplot(n_vals, [Float64(O_2n(n)) for n in n_vals], \n     label=\"O(2ⁿ)\", linewidth=2, marker=:circle)\nplot!(n_vals, [Float64(O_fact(n)) for n in n_vals], \n      label=\"O(n!)\", linewidth=2, marker=:square)\n\nxlabel!(\"n\")\nylabel!(\"Operaciones (escala log)\")\ntitle!(\"O(2ⁿ) vs O(n!)\")\nyaxis!(:log)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resultados-3",
+    "href": "unidad-2/index.html#resultados-3",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resultados",
+    "text": "Resultados\n\nvalores_pequenos = [10, 15, 20, 25]\n\nprintln(\"Comparación O(2ⁿ) vs O(n!)\")\nprintln(\"=\"^85)\n@printf(\"%-6s %-18s %-15s %-22s %-15s\\n\", \n        \"n\", \"O(2ⁿ)\", \"Tiempo\", \"O(n!)\", \"Tiempo\")\nprintln(\"-\"^85)\n\nfor n in valores_pequenos\n    ops_2n = O_2n(n)\n    ops_fact = O_fact(n)\n    t1 = Float64(ops_2n) * NANOSEGUNDO\n    t2 = Float64(ops_fact) * NANOSEGUNDO\n    \n    @printf(\"%-6d %-18s %-15s %-22s %-15s\\n\", \n            n, format_number(Float64(ops_2n)), formato_tiempo(t1), \n            format_number(Float64(ops_fact)), formato_tiempo(t2))\nend\n\nComparación O(2ⁿ) vs O(n!)\n=====================================================================================\nn      O(2ⁿ)              Tiempo          O(n!)                  Tiempo         \n-------------------------------------------------------------------------------------\n10     1,024              1.02 μs         3,628,800              3.63 ms        \n15     32,768             32.77 μs        1,307,674,368,000      21.79 min      \n20     1,048,576          1.05 ms         2.43e+18               7.71e+01 años  \n25     33,554,432         33.55 ms        1.55e+25               4.92e+08 años",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#observaciones-3",
+    "href": "unidad-2/index.html#observaciones-3",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Observaciones",
+    "text": "Observaciones\nLos resultados de esta tabla son impresionantes. Para n = 20:\n\nO(2ⁿ) tarda 1 milisegundo\nO(n!) tarda 77 mil millones de años\n\nNo es error. 77 mil millones de años. El universo tiene aproximadamente 13 mil millones de años. Esto significa que para 20 ciudades, encontrar la ruta perfecta del viajante con fuerza bruta tomaría más de 5 veces la edad del universo.\nAhora comprendo por qué existen las heurísticas y los algoritmos aproximados.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#explicación-4",
+    "href": "unidad-2/index.html#explicación-4",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Explicación",
+    "text": "Explicación\nYa vimos que n! crece de manera extremadamente rápida. Pero nⁿ crece todavía más rápido.\nLa diferencia radica en que en n! los factores van disminuyendo (5! = 5×4×3×2×1) mientras que en nⁿ todos los factores son el número más grande (5⁵ = 5×5×5×5×5).",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#funciones-y-gráfica-4",
+    "href": "unidad-2/index.html#funciones-y-gráfica-4",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Funciones y gráfica",
+    "text": "Funciones y gráfica\n\nO_nn(n) = BigInt(n)^n\n\nO_nn (generic function with 1 method)\n\n\n\nn_vals = 1:9\n\nplot(n_vals, [Float64(O_fact(n)) for n in n_vals], \n     label=\"O(n!)\", linewidth=2, marker=:circle)\nplot!(n_vals, [Float64(O_nn(n)) for n in n_vals], \n      label=\"O(nⁿ)\", linewidth=2, marker=:square)\n\nxlabel!(\"n\")\nylabel!(\"Operaciones (escala log)\")\ntitle!(\"O(n!) vs O(nⁿ)\")\nyaxis!(:log)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resultados-4",
+    "href": "unidad-2/index.html#resultados-4",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resultados",
+    "text": "Resultados\n\nvalores_muy_pequenos = [5, 8, 10, 12]\n\nprintln(\"Comparación O(n!) vs O(nⁿ)\")\nprintln(\"=\"^85)\n@printf(\"%-6s %-18s %-15s %-22s %-15s\\n\", \n        \"n\", \"O(n!)\", \"Tiempo\", \"O(nⁿ)\", \"Tiempo\")\nprintln(\"-\"^85)\n\nfor n in valores_muy_pequenos\n    ops_fact = O_fact(n)\n    ops_nn = O_nn(n)\n    t1 = Float64(ops_fact) * NANOSEGUNDO\n    t2 = Float64(ops_nn) * NANOSEGUNDO\n    \n    @printf(\"%-6d %-18s %-15s %-22s %-15s\\n\", \n            n, format_number(Float64(ops_fact)), formato_tiempo(t1), \n            format_number(Float64(ops_nn)), formato_tiempo(t2))\nend\n\nComparación O(n!) vs O(nⁿ)\n=====================================================================================\nn      O(n!)              Tiempo          O(nⁿ)                  Tiempo         \n-------------------------------------------------------------------------------------\n5      120                120.00 ns       3,125                  3.12 μs        \n8      40,320             40.32 μs        16,777,216             16.78 ms       \n10     3,628,800          3.63 ms         10,000,000,000         10.00 seg      \n12     479,001,600        479.00 ms       8,916,100,448,256      2.48 hrs",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#observaciones-4",
+    "href": "unidad-2/index.html#observaciones-4",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Observaciones",
+    "text": "Observaciones\nPara n = 12:\n\nO(n!) tarda medio segundo. Todavía usable.\nO(nⁿ) tarda 24 días.\n\nMedio segundo contra casi un mes. Y eso con n = 12, que es un valor bastante pequeño.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#resumen-de-viabilidad",
+    "href": "unidad-2/index.html#resumen-de-viabilidad",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Resumen de viabilidad",
+    "text": "Resumen de viabilidad\n\n\n\nOrden\n¿Se puede usar?\nLímite práctico\n\n\n\n\nO(1)\nSiempre\nSin límite\n\n\nO(log n)\nSiempre\nSin límite\n\n\nO(n)\nSiempre\nMillones\n\n\nO(n log n)\nSiempre\nMillones\n\n\nO(n²)\nA veces\n~10,000\n\n\nO(n³)\nCasi nunca\n~1,000\n\n\nO(2ⁿ)\nNo\n~30\n\n\nO(n!)\nNo\n~15\n\n\nO(nⁿ)\nNo\n~10",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#implicaciones-en-aplicaciones-reales",
+    "href": "unidad-2/index.html#implicaciones-en-aplicaciones-reales",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Implicaciones en aplicaciones reales",
+    "text": "Implicaciones en aplicaciones reales\nBases de datos: Con millones de registros, un algoritmo O(n²) tardaría días en hacer una consulta. Por eso las bases de datos utilizan índices que permiten búsquedas O(log n).\nMachine Learning: Entrenar algunos modelos puede ser O(n²) o O(n³), por eso se emplean técnicas como el muestreo o el procesamiento por lotes para no tener que procesar todo el conjunto de datos de una sola vez.\nOptimización: Problemas como el del viajante son O(n!) si se busca la solución exacta. Por eso en la práctica se usan aproximaciones que proporcionan una solución “suficientemente buena” en tiempo razonable.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#los-órdenes-o1-olog-n-on-y-on-log-n-son-eficientes",
+    "href": "unidad-2/index.html#los-órdenes-o1-olog-n-on-y-on-log-n-son-eficientes",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Los órdenes O(1), O(log n), O(n) y O(n log n) son eficientes",
+    "text": "Los órdenes O(1), O(log n), O(n) y O(n log n) son eficientes\nEstos órdenes de crecimiento permiten trabajar con conjuntos de datos grandes sin preocuparse por el tiempo de ejecución. Por ejemplo, con n = 100,000 elementos:\n\nO(1) tarda 1 nanosegundo\nO(log n) tarda 17 nanosegundos\nO(n) tarda 100 microsegundos\nO(n log n) tarda 1.6 milisegundos\n\nTodos estos tiempos son imperceptibles para el usuario. Esto explica por qué algoritmos como la búsqueda binaria O(log n) o los ordenamientos eficientes como Merge Sort O(n log n) son tan utilizados en la práctica: escalan muy bien incluso con millones de datos.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#los-órdenes-on²-y-on³-requieren-precaución",
+    "href": "unidad-2/index.html#los-órdenes-on²-y-on³-requieren-precaución",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Los órdenes O(n²) y O(n³) requieren precaución",
+    "text": "Los órdenes O(n²) y O(n³) requieren precaución\nEstos órdenes funcionan bien para datos pequeños, pero se vuelven problemáticos conforme n crece. La diferencia es notable:\n\nPara n = 1,000: O(n²) tarda 1 milisegundo, O(n³) tarda 1 segundo\nPara n = 10,000: O(n²) tarda 100 milisegundos, O(n³) tarda 16 minutos\nPara n = 100,000: O(n²) tarda 10 segundos, O(n³) tarda 11.5 días\n\nEsto significa que un algoritmo O(n²) puede ser aceptable para procesar unos cuantos miles de registros, pero si los datos crecen a decenas de miles, el tiempo de espera se vuelve molesto. Y con O(n³), el límite práctico es todavía más bajo. Por esta razón, cuando se trabaja con grandes volúmenes de información, es importante buscar alternativas más eficientes o aceptar que el procesamiento tomará tiempo considerable.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#los-órdenes-o2ⁿ-on-y-onⁿ-son-imprácticos",
+    "href": "unidad-2/index.html#los-órdenes-o2ⁿ-on-y-onⁿ-son-imprácticos",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Los órdenes O(2ⁿ), O(n!) y O(nⁿ) son imprácticos",
+    "text": "Los órdenes O(2ⁿ), O(n!) y O(nⁿ) son imprácticos\nEstos órdenes crecen tan rápido que se vuelven inutilizables incluso para valores pequeños de n. Por esta razón no fue posible usar los valores de n = 100, 1000, 10000 y 100000 que pedía el ejercicio para las últimas comparaciones.\nPara ilustrar la magnitud del problema:\n\nO(2²⁰) = 1 milisegundo (manejable)\nO(20!) = 77 mil millones de años (imposible)\nO(12¹²) = 24 días (impráctico)\n\nEstos números explican por qué problemas como el del viajante (que requiere evaluar todas las permutaciones posibles) no pueden resolverse de manera exacta para más de unas pocas decenas de elementos. En la práctica, se recurre a heurísticas y algoritmos aproximados que encuentran soluciones “suficientemente buenas” en tiempo razonable, sacrificando la garantía de optimalidad.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#elegir-bien-el-algoritmo-importa-más-que-tener-mejor-hardware",
+    "href": "unidad-2/index.html#elegir-bien-el-algoritmo-importa-más-que-tener-mejor-hardware",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Elegir bien el algoritmo importa más que tener mejor hardware",
+    "text": "Elegir bien el algoritmo importa más que tener mejor hardware\nUna de las lecciones más importantes de este ejercicio es que ninguna mejora en hardware puede compensar un algoritmo ineficiente.\nPor ejemplo, supongamos que tenemos un algoritmo O(2ⁿ) y compramos una computadora 1000 veces más rápida. Esto solo nos permitiría aumentar n en aproximadamente 10 unidades (porque 2¹⁰ ≈ 1000). En cambio, si encontramos un algoritmo O(n²) para el mismo problema, podríamos manejar valores de n mucho mayores incluso en una computadora modesta.\nEsto tiene implicaciones directas en el desarrollo de software: antes de invertir en mejor infraestructura, conviene revisar si el algoritmo utilizado es el más adecuado para el problema.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
+    "objectID": "unidad-2/index.html#reflexión-final",
+    "href": "unidad-2/index.html#reflexión-final",
+    "title": "Unidad 2 — Comparación de Órdenes de Crecimiento",
+    "section": "Reflexión final",
+    "text": "Reflexión final\nLo que más me llamó la atención de este ejercicio fue observar cómo agregar un simple ciclo anidado puede convertir un programa que tarda segundos en uno que tarda días. La diferencia entre O(n²) y O(n³) no parece tan grande cuando se escribe en papel, pero en la práctica representa la diferencia entre un programa usable y uno que nunca termina.\nDefinitivamente, este ejercicio me hizo valorar la importancia de analizar la complejidad antes de implementar una solución. A veces el código más simple o más obvio no es el más adecuado cuando se trabaja con grandes cantidades de datos.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 2 — Órdenes de crecimiento"
+    ]
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Reportes del curso Análisis de Algoritmos",
@@ -280,7 +616,7 @@
     "href": "index.html#unidades-publicadas",
     "title": "Reportes del curso Análisis de Algoritmos",
     "section": "Unidades publicadas",
-    "text": "Unidades publicadas\nA medida que avanzo en el curso voy agregando más unidades aquí.\n\nUnidad 3 — Estructuras de datos elementales\nComparación de dos enfoques algorítmicos para resolver el problema del producto punto máximo (top-1): un enfoque directo basado en multiplicación matricial completa (\\(A_1: P = Q^\\top X\\)) y una variante adaptada de getmaxdot que procesa columna por columna ahorrando memoria (\\(A_2\\)). Análisis del trade-off entre tiempo de ejecución y uso de memoria sobre matrices densas de distintos tamaños.\nIr al reporte →\n\n\nUnidad 4 — Algoritmos de ordenamiento\nComparación experimental de cuatro algoritmos clásicos —Bubblesort adaptativo, Mergesort, Quicksort con pivote aleatorio y Heapsort— sobre listas de posteo con distintos niveles de perturbación. Se mide tanto el número exacto de comparaciones como el tiempo de ejecución, y se discute por qué la complejidad asintótica no siempre coincide con el desempeño real (efectos de caché, presortedness, comportamiento adaptativo).\nIr al reporte →\n\n\nUnidad 5 — Algoritmos de búsqueda en el modelo de comparación\nAnálisis experimental de algoritmos de búsqueda sobre listas ordenadas. Se comparan cuatro estrategias —búsqueda binaria, \\(B_0\\) secuencial, \\(B_1\\) doblada y \\(B_2\\) doblemente doblada— sobre listas de posteo reales con distintos niveles de perturbación y cuatro distribuciones de consultas. Verificación empírica de las cotas teóricas de Bentley y Yao (1976).\nIr al reporte →\n\n\nUnidad 6 — Algoritmos de intersección y unión de conjuntos\nDiseño y comparación de estrategias para resolver el problema de intersección de listas ordenadas, motivado por la operación fundamental en motores de búsqueda. Se implementan cinco configuraciones (Merge clásico, Baeza-Yates parametrizado con tres búsquedas distintas, y Barbay-Kenyon) y se comparan empíricamente sobre 600 instancias reales de posting lists.\nIr al reporte →",
+    "text": "Unidades publicadas\nA medida que avanzo en el curso voy agregando más unidades aquí.\n\nUnidad 1 — Máquina de Turing\nCodificación matemática de una máquina de Turing que calcula la función \\(f(n) = 3n + 1\\). Se definen formalmente los componentes del modelo —conjunto de estados, alfabetos, función de transición— y se ilustra el funcionamiento paso a paso sobre una entrada concreta en notación unaria.\nIr al reporte →\n\n\nUnidad 2 — Comparación de órdenes de crecimiento\nAnálisis empírico y visual de cómo escalan distintas complejidades temporales (\\(O(1)\\), \\(O(\\log n)\\), \\(O(n)\\), \\(O(n \\log n)\\), \\(O(n^2)\\), \\(O(2^n)\\), \\(O(n!)\\)) en función del tamaño de entrada. Se calculan los tiempos teóricos esperados para tamaños \\(n \\in \\{100, 10^3, 10^4, 10^5\\}\\) y se discute por qué la notación asintótica importa en la práctica.\nIr al reporte →\n\n\nUnidad 3 — Estructuras de datos elementales\nComparación de dos enfoques algorítmicos para resolver el problema del producto punto máximo (top-1): un enfoque directo basado en multiplicación matricial completa (\\(A_1: P = Q^\\top X\\)) y una variante adaptada de getmaxdot que procesa columna por columna ahorrando memoria (\\(A_2\\)). Análisis del trade-off entre tiempo de ejecución y uso de memoria sobre matrices densas de distintos tamaños.\nIr al reporte →\n\n\nUnidad 4 — Algoritmos de ordenamiento\nComparación experimental de cuatro algoritmos clásicos —Bubblesort adaptativo, Mergesort, Quicksort con pivote aleatorio y Heapsort— sobre listas de posteo con distintos niveles de perturbación. Se mide tanto el número exacto de comparaciones como el tiempo de ejecución, y se discute por qué la complejidad asintótica no siempre coincide con el desempeño real (efectos de caché, presortedness, comportamiento adaptativo).\nIr al reporte →\n\n\nUnidad 5 — Algoritmos de búsqueda en el modelo de comparación\nAnálisis experimental de algoritmos de búsqueda sobre listas ordenadas. Se comparan cuatro estrategias —búsqueda binaria, \\(B_0\\) secuencial, \\(B_1\\) doblada y \\(B_2\\) doblemente doblada— sobre listas de posteo reales con distintos niveles de perturbación y cuatro distribuciones de consultas. Verificación empírica de las cotas teóricas de Bentley y Yao (1976).\nIr al reporte →\n\n\nUnidad 6 — Algoritmos de intersección y unión de conjuntos\nDiseño y comparación de estrategias para resolver el problema de intersección de listas ordenadas, motivado por la operación fundamental en motores de búsqueda. Se implementan cinco configuraciones (Merge clásico, Baeza-Yates parametrizado con tres búsquedas distintas, y Barbay-Kenyon) y se comparan empíricamente sobre 600 instancias reales de posting lists.\nIr al reporte →",
     "crumbs": [
       "Sobre esta página",
       "Información",
@@ -297,6 +633,258 @@
       "Sobre esta página",
       "Información",
       "Sobre esta página"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html",
+    "href": "unidad-1/index.html",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "",
+    "text": "Las máquinas de Turing son uno de los conceptos más importantes en la teoría de la computación. Fueron propuestas por Alan Turing en 1936, mucho antes de que existieran las computadoras modernas, y siguen siendo fundamentales para entender cómo funcionan los algoritmos y qué problemas pueden ser resueltos mediante un proceso computacional.\nEn este trabajo presento la codificación matemática de una máquina de Turing que calcula la función \\(f(n) = 3n + 1\\). Para lograr esto, fue necesario definir formalmente todos los componentes de la máquina:\n\nEl conjunto de estados\nLos alfabetos de entrada y de cinta\nEl estado inicial\nEl símbolo blanco\nLos estados de aceptación\nLa función de transición\n\nEl objetivo es mostrar cómo una operación aritmética aparentemente sencilla puede ser implementada mediante un modelo de cómputo tan básico como la máquina de Turing, utilizando únicamente operaciones elementales de lectura, escritura y movimiento sobre una cinta. Para facilitar la comprensión, incluyo un ejemplo detallado del funcionamiento de la máquina con una entrada específica.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#conjunto-de-estados-q",
+    "href": "unidad-1/index.html#conjunto-de-estados-q",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Conjunto de Estados \\(Q\\)",
+    "text": "Conjunto de Estados \\(Q\\)\n\\[Q = \\{q_0, q_1, q_2, q_3, q_4, q_5, q_7, q_8, q_{halt}\\}\\]\n\n\n\nEstado\nDescripción\n\n\n\n\n\\(q_0\\)\nIr al final de la entrada\n\n\n\\(q_1\\)\nVolver al inicio\n\n\n\\(q_2\\)\nEscanear entrada\n\n\n\\(q_3\\)\nIr a zona de salida\n\n\n\\(q_4\\)\nEscribir primer 1 del triplete\n\n\n\\(q_5\\)\nEscribir segundo 1 del triplete\n\n\n\\(q_7\\)\nRetornar a buscar siguiente símbolo\n\n\n\\(q_8\\)\nSumar el +1 final\n\n\n\\(q_{halt}\\)\nEstado de aceptación (terminado)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#alfabeto-de-entrada-sigma",
+    "href": "unidad-1/index.html#alfabeto-de-entrada-sigma",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Alfabeto de Entrada \\(\\Sigma\\)",
+    "text": "Alfabeto de Entrada \\(\\Sigma\\)\n\\[\\Sigma = \\{1\\}\\]\nLos números se representan en sistema unario: el número \\(n\\) se representa como \\(n\\) unos consecutivos.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#alfabeto-de-la-cinta-gamma",
+    "href": "unidad-1/index.html#alfabeto-de-la-cinta-gamma",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Alfabeto de la Cinta \\(\\Gamma\\)",
+    "text": "Alfabeto de la Cinta \\(\\Gamma\\)\n\\[\\Gamma = \\{1, X, \\#, \\_\\}\\]\nDonde:\n\n\\(1\\) = símbolo de entrada/salida (representa unidades)\n\\(X\\) = marca para símbolos ya procesados\n\\(\\#\\) = separador entre entrada y salida\n\\(\\_\\) = blanco (espacio vacío)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#estado-inicial-s",
+    "href": "unidad-1/index.html#estado-inicial-s",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Estado Inicial \\(s\\)",
+    "text": "Estado Inicial \\(s\\)\n\\[s = q_0\\]",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#símbolo-blanco-epsilon",
+    "href": "unidad-1/index.html#símbolo-blanco-epsilon",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Símbolo Blanco \\(\\epsilon\\)",
+    "text": "Símbolo Blanco \\(\\epsilon\\)\n\\[\\epsilon = \\_\\]",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#conjunto-de-estados-finales-f",
+    "href": "unidad-1/index.html#conjunto-de-estados-finales-f",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Conjunto de Estados Finales \\(F\\)",
+    "text": "Conjunto de Estados Finales \\(F\\)\n\\[F = \\{q_{halt}\\}\\]",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#función-de-transición-delta",
+    "href": "unidad-1/index.html#función-de-transición-delta",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Función de Transición \\(\\delta\\)",
+    "text": "Función de Transición \\(\\delta\\)\n\\[\\delta : Q \\times \\Gamma \\rightarrow Q \\times \\Gamma \\times \\{L, R, S\\}\\]",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#leyenda-de-símbolos",
+    "href": "unidad-1/index.html#leyenda-de-símbolos",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Leyenda de símbolos",
+    "text": "Leyenda de símbolos\n\n\n\nSímbolo\nSignificado\n\n\n\n\nR\nMover cabezal a la derecha (Right)\n\n\nL\nMover cabezal a la izquierda (Left)\n\n\nS\nQuedarse en la misma posición (Stay)\n\n\n_\nEspacio en blanco (celda vacía)\n\n\n#\nSeparador entre entrada y salida\n\n\nX\nMarca de símbolo ya procesado\n\n\n1\nSímbolo unitario (representa cantidad en unario)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#tabla-de-transiciones",
+    "href": "unidad-1/index.html#tabla-de-transiciones",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Tabla de Transiciones",
+    "text": "Tabla de Transiciones\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_0\\)\n\\(1\\)\n\\(q_0\\)\n\\(1\\)\n\\(R\\)\n\n\n\\(q_0\\)\n\\(\\_\\)\n\\(q_1\\)\n\\(\\#\\)\n\\(L\\)\n\n\n\\(q_1\\)\n\\(1\\)\n\\(q_1\\)\n\\(1\\)\n\\(L\\)\n\n\n\\(q_1\\)\n\\(\\_\\)\n\\(q_2\\)\n\\(\\_\\)\n\\(R\\)\n\n\n\\(q_2\\)\n\\(X\\)\n\\(q_2\\)\n\\(X\\)\n\\(R\\)\n\n\n\\(q_2\\)\n\\(1\\)\n\\(q_3\\)\n\\(X\\)\n\\(R\\)\n\n\n\\(q_2\\)\n\\(\\#\\)\n\\(q_8\\)\n\\(\\#\\)\n\\(R\\)\n\n\n\\(q_3\\)\n\\(1\\)\n\\(q_3\\)\n\\(1\\)\n\\(R\\)\n\n\n\\(q_3\\)\n\\(\\#\\)\n\\(q_3\\)\n\\(\\#\\)\n\\(R\\)\n\n\n\\(q_3\\)\n\\(X\\)\n\\(q_3\\)\n\\(X\\)\n\\(R\\)\n\n\n\\(q_3\\)\n\\(\\_\\)\n\\(q_4\\)\n\\(1\\)\n\\(R\\)\n\n\n\\(q_4\\)\n\\(\\_\\)\n\\(q_5\\)\n\\(1\\)\n\\(R\\)\n\n\n\\(q_5\\)\n\\(\\_\\)\n\\(q_7\\)\n\\(1\\)\n\\(L\\)\n\n\n\\(q_7\\)\n\\(1\\)\n\\(q_7\\)\n\\(1\\)\n\\(L\\)\n\n\n\\(q_7\\)\n\\(\\#\\)\n\\(q_7\\)\n\\(\\#\\)\n\\(L\\)\n\n\n\\(q_7\\)\n\\(X\\)\n\\(q_2\\)\n\\(X\\)\n\\(R\\)\n\n\n\\(q_8\\)\n\\(1\\)\n\\(q_8\\)\n\\(1\\)\n\\(R\\)\n\n\n\\(q_8\\)\n\\(\\_\\)\n\\(q_{halt}\\)\n\\(1\\)\n\\(S\\)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#representación-de-los-números",
+    "href": "unidad-1/index.html#representación-de-los-números",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Representación de los números",
+    "text": "Representación de los números\nLa máquina usa el sistema unario, donde el número n se representa escribiendo n veces el símbolo “1”:\n\n\n\nNúmero decimal\nRepresentación unaria\n\n\n\n\n1\n1\n\n\n2\n11\n\n\n3\n111\n\n\n4\n1111\n\n\n5\n11111",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#analogía-del-funcionamiento",
+    "href": "unidad-1/index.html#analogía-del-funcionamiento",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Analogía del funcionamiento",
+    "text": "Analogía del funcionamiento\nPara entender mejor el proceso, podemos pensar en una banda transportadora con casillas. Un trabajador (el cabezal) puede:\n\nLeer lo que hay en una casilla\nEscribir algo nuevo en esa casilla\nMoverse un paso a la izquierda o a la derecha\n\nEl trabajador sigue instrucciones específicas según lo que lee y el “modo” en que está trabajando (su estado).",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#las-3-fases-del-algoritmo",
+    "href": "unidad-1/index.html#las-3-fases-del-algoritmo",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Las 3 fases del algoritmo",
+    "text": "Las 3 fases del algoritmo\n\nFASE 1: Preparar el espacio de trabajo\n(Estados \\(q_0\\) y \\(q_1\\))\nEl cabezal recorre la cinta hacia la derecha hasta encontrar el final de los números, coloca un separador # para dividir la zona de entrada y la zona de salida, y regresa al inicio.\nEjemplo con n = 2:\nInicio:     [1][1][_][_][_][_][_][_]...\n                  ↑ cabezal aquí\n\nDespués:    [1][1][#][_][_][_][_][_]...\n             ↑ cabezal regresa al inicio\n\n\nFASE 2: Multiplicar por 3\n(Estados \\(q_2\\), \\(q_3\\), \\(q_4\\), \\(q_5\\), \\(q_7\\))\nPor cada “1” que encuentra en la entrada:\n\nLo marca con una X (para recordar que ya lo procesó)\nVa a la zona de salida (después del #)\nEscribe tres “1” (porque estamos multiplicando por 3)\nRegresa a buscar el siguiente “1” sin marcar\nRepite hasta que no queden “1” sin marcar\n\nEjemplo con n = 2 (paso a paso):\nPaso 1 - Encuentra el primer \"1\" y lo marca:\n[1][1][#][_][_][_][_]...\n ↓\n[X][1][#][_][_][_][_]...\n\nPaso 2 - Va a la zona de salida y escribe tres \"1\":\n[X][1][#][1][1][1][_]...\n\nPaso 3 - Regresa y encuentra el segundo \"1\", lo marca:\n[X][1][#][1][1][1][_]...\n    ↓\n[X][X][#][1][1][1][_]...\n\nPaso 4 - Va a la zona de salida y escribe otros tres \"1\":\n[X][X][#][1][1][1][1][1][1][_]...\n\nYa no hay más \"1\" sin marcar, pasamos a la siguiente fase.\nResultado parcial: Tenemos seis “1” en la salida (que es \\(3 \\times 2 = 6\\))\n\n\nFASE 3: Sumar 1\n(Estado \\(q_8\\))\nCuando ya no hay más “1” para procesar, el cabezal encuentra el separador #, se mueve al final de la zona de salida, escribe un “1” adicional (esta es la parte “+1” de la fórmula) y termina.\nEjemplo con n = 2 (continuación):\nAntes de sumar:\n[X][X][#][1][1][1][1][1][1][_]...\n                           ↑ va al final\n\nDespués de sumar +1:\n[X][X][#][1][1][1][1][1][1][1]\n                           ↑ escribe un \"1\" más\n\nResultado final: 7 unos = 7 en decimal",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#resumen-visual-para-n-2",
+    "href": "unidad-1/index.html#resumen-visual-para-n-2",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Resumen visual para n = 2",
+    "text": "Resumen visual para n = 2\nENTRADA: n = 2  →  [1][1]\n\nFASE 1 (Preparar):\n[1][1][_]  →  [1][1][#][_][_][_][_][_][_]\n\nFASE 2 (Multiplicar por 3):\nProcesar primer \"1\":   [X][1][#][1][1][1][_][_][_]\nProcesar segundo \"1\":  [X][X][#][1][1][1][1][1][1]\n\nFASE 3 (Sumar 1):\n[X][X][#][1][1][1][1][1][1][1]\n        └───────┬───────┘\n              7 unos\n\nSALIDA: 7 unos = 7 en decimal\n\nVerificación: 3(2) + 1 = 6 + 1 = 7 ✓",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#análisis-matemático",
+    "href": "unidad-1/index.html#análisis-matemático",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Análisis matemático",
+    "text": "Análisis matemático\n\n\n\nOperación\nCómo lo hace la máquina\n\n\n\n\n×3\nPor cada “1” de entrada, escribe tres “1” en la salida\n\n\n+1\nAl final, escribe un “1” extra\n\n\n\nSi tienes n unos de entrada:\n\nFase 2 produce: 3n unos\nFase 3 agrega: 1 uno más\nTotal: 3n + 1 unos",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#entrada-inicial",
+    "href": "unidad-1/index.html#entrada-inicial",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Entrada inicial",
+    "text": "Entrada inicial\nEn sistema unario, n = 3 se representa como: 1 1 1\nCinta inicial:  [1][1][1][_][_][_][_][_][_][_][_][_]...\n                 ↑\ncabezal (estado \\(q_0\\))\nResultado esperado: 3(3) + 1 = 10 (diez unos en la salida)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#fase-1-preparar-el-espacio-de-trabajo-1",
+    "href": "unidad-1/index.html#fase-1-preparar-el-espacio-de-trabajo-1",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "FASE 1: Preparar el espacio de trabajo",
+    "text": "FASE 1: Preparar el espacio de trabajo\nPaso 1\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_0\\)\n1\n\\(q_0\\)\n1\nR\n\n\n\nEstoy en \\(q_0\\), leo 1, me quedo en \\(q_0\\), escribo 1, me muevo a la derecha.\n[1][1][1][_][_]...\n    ↑\n\\(q_0\\)\nPaso 2\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_0\\)\n1\n\\(q_0\\)\n1\nR\n\n\n\n[1][1][1][_][_]...\n       ↑\n\\(q_0\\)\nPaso 3\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_0\\)\n1\n\\(q_0\\)\n1\nR\n\n\n\n[1][1][1][_][_]...\n          ↑\n\\(q_0\\)\nPaso 4\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_0\\)\n_\n\\(q_1\\)\n#\nL\n\n\n\nEstoy en \\(q_0\\), leo vacío (_), cambio a \\(q_1\\), escribo #, me muevo a la izquierda.\n[1][1][1][#][_]...\n       ↑\n\\(q_1\\)\nPaso 5\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_1\\)\n1\n\\(q_1\\)\n1\nL\n\n\n\n[1][1][1][#][_]...\n    ↑\n\\(q_1\\)\nPaso 6\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_1\\)\n1\n\\(q_1\\)\n1\nL\n\n\n\n[1][1][1][#][_]...\n ↑\n\\(q_1\\)\nPaso 7\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_1\\)\n1\n\\(q_1\\)\n1\nL\n\n\n\n[_][1][1][1][#][_]...\n ↑\n\\(q_1\\)\nPaso 8\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_1\\)\n_\n\\(q_2\\)\n_\nR\n\n\n\nEstoy en \\(q_1\\), leo vacío, cambio a \\(q_2\\), me muevo a la derecha.\n[_][1][1][1][#][_]...\n    ↑\n\\(q_2\\)\nFin de Fase 1: El separador # está colocado y el cabezal está al inicio.",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#fase-2-multiplicar-por-3-1",
+    "href": "unidad-1/index.html#fase-2-multiplicar-por-3-1",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "FASE 2: Multiplicar por 3",
+    "text": "FASE 2: Multiplicar por 3\n\nProcesamiento del primer “1”\nPaso 9\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_2\\)\n1\n\\(q_3\\)\nX\nR\n\n\n\nEstoy en \\(q_2\\), leo 1, cambio a \\(q_3\\), escribo X (marco como procesado), me muevo a la derecha.\n[_][X][1][1][#][_][_][_][_]...\n       ↑\n\\(q_3\\)\nPasos 10-12: Avanzar hasta zona de salida\n\\(q_3\\) | 1 | \\(q_3\\) | 1 | R |\n\\(q_3\\) | 1 | \\(q_3\\) | 1 | R |\n\\(q_3\\) | # | \\(q_3\\) | # | R |\n[_][X][1][1][#][_][_][_][_]...\n                ↑\n\\(q_3\\)\nPaso 13: Escribir primer “1” del triplete\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_3\\)\n_\n\\(q_4\\)\n1\nR\n\n\n\n[_][X][1][1][#][1][_][_][_]...\n                   ↑\n\\(q_4\\)\nPaso 14: Escribir segundo “1” del triplete\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_4\\)\n_\n\\(q_5\\)\n1\nR\n\n\n\n[_][X][1][1][#][1][1][_][_]...\n                      ↑\n\\(q_5\\)\nPaso 15: Escribir tercer “1” del triplete\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_5\\)\n_\n\\(q_7\\)\n1\nL\n\n\n\n[_][X][1][1][#][1][1][1][_]...\n                      ↑\n\\(q_7\\)\nPrimer “1” procesado: Se escribieron 3 unos. Ahora regresa a buscar el siguiente.\nPasos 16-20: Regresar al inicio\nEl cabezal regresa hacia la izquierda (estado \\(q_7\\)) hasta encontrar la X:\n[_][X][1][1][#][1][1][1][_]...\n    ↑\n\\(q_7\\)\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_7\\)\nX\n\\(q_2\\)\nX\nR\n\n\n\n[_][X][1][1][#][1][1][1][_]...\n       ↑\n\\(q_2\\)\n\n\nProcesamiento del segundo “1”\nMarcar el segundo “1”\n\\(q_2\\) | 1 | \\(q_3\\) | X | R |\n[_][X][X][1][#][1][1][1][_]...\n          ↑\n\\(q_3\\)\nEscribir otros 3 unos en la salida\nSiguiendo el mismo proceso:\n[_][X][X][1][#][1][1][1][1][1][1][_]...\nSegundo “1” procesado: Ahora hay 6 unos en la salida.\n\n\nProcesamiento del tercer “1”\nMarcar el tercer “1”\n\\(q_2\\) | 1 | \\(q_3\\) | X | R |\n[_][X][X][X][#][1][1][1][1][1][1][_]...\nEscribir otros 3 unos en la salida\n[_][X][X][X][#][1][1][1][1][1][1][1][1][1][_]...\nTercer “1” procesado: Ahora hay 9 unos en la salida (\\(3 \\times 3 = 9\\)).",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#fase-3-sumar-1-1",
+    "href": "unidad-1/index.html#fase-3-sumar-1-1",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "FASE 3: Sumar +1",
+    "text": "FASE 3: Sumar +1\nEl cabezal regresa y encuentra el separador #:\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_2\\)\n#\n\\(q_8\\)\n#\nR\n\n\n\nYa no hay más 1’s que procesar, paso a \\(q_8\\) para sumar el +1.\n[_][X][X][X][#][1][1][1][1][1][1][1][1][1][_]...\n                                          ↑\n\\(q_8\\)\nPaso final: Escribir el “+1”\n\n\n\n\n\n\n\n\n\n\nEstado Actual\nSímbolo Leído\nEstado Siguiente\nSímbolo Escrito\nMovimiento\n\n\n\n\n\\(q_8\\)\n_\n\\(q_{halt}\\)\n1\nS\n\n\n\n[_][X][X][X][#][1][1][1][1][1][1][1][1][1][1]\n                                          ↑\n\\(q_{halt}\\) (FIN)",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#resultado-final",
+    "href": "unidad-1/index.html#resultado-final",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Resultado Final",
+    "text": "Resultado Final\nEntrada:  [1][1][1]                        →  3 unos = 3 en decimal\n\nSalida:   [1][1][1][1][1][1][1][1][1][1]   →  10 unos = 10 en decimal\nVerificación: $3(3) + 1 = 9 + 1 = $ 10 ✓",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
+    ]
+  },
+  {
+    "objectID": "unidad-1/index.html#resumen-de-la-ejecución",
+    "href": "unidad-1/index.html#resumen-de-la-ejecución",
+    "title": "Unidad 1 — Máquina de Turing",
+    "section": "Resumen de la ejecución",
+    "text": "Resumen de la ejecución\n\n\n\nFase\nAcción\nContenido de la cinta (zona de salida)\n\n\n\n\n1\nPreparar\n(vacío)\n\n\n2a\nProcesar 1er “1”\n111\n\n\n2b\nProcesar 2do “1”\n111111\n\n\n2c\nProcesar 3er “1”\n111111111\n\n\n3\nSumar +1\n1111111111",
+    "crumbs": [
+      "Sobre esta página",
+      "Unidades publicadas",
+      "Unidad 1 — Máquina de Turing"
     ]
   },
   {
