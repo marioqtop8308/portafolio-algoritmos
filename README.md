@@ -1,7 +1,7 @@
 # Portafolio de Análisis de Algoritmos
 
 Reportes de las prácticas del curso **Análisis de Algoritmos** del programa
-Técnico Superior Universitario en Servicios en la Nube de INFOTEC.
+Maestría en Ciencia de Datos e Información de INFOTEC.
 
 🌐 **Sitio publicado:** https://marioqtop8308.github.io/portafolio-algoritmos/
 
@@ -43,4 +43,4 @@ El resultado queda en `docs/` y puede abrirse con cualquier navegador.
 
 ## Sobre el autor
 
-Mario Galván Rosales — estudiante de TSU en Servicios en la Nube, INFOTEC.
+Mario Galván Rosales — estudiante de Maestría en Ciencia de Datos e Información, INFOTEC.

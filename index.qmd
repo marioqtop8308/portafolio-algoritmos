@@ -1,15 +1,15 @@
 ---
 title: "Reportes del curso Análisis de Algoritmos"
-subtitle: "Portafolio de prácticas — TSU en Servicios en la Nube"
+subtitle: "Portafolio de prácticas — Maestría en Ciencia de Datos e Información"
 lang: es-MX
 ---
 
 ::: {.callout-note title="Ficha del estudiante" icon=false}
 **Institución:** INFOTEC — Centro de Investigación e Innovación en
 Tecnologías de la Información y Comunicación  
-**Programa:** Técnico Superior Universitario en Servicios en la Nube  
-**Materia:** Análisis de Algoritmos  
-**Estudiante:** Mario Galván Rosales  
+**Programa:** Maestría en Ciencia de Datos e Información      
+**Materia:** Análisis de Algoritmos    
+**Estudiante:** Mario Galván Rosales   
 **Curso de referencia:** [*Curso Introductorio al Análisis de
 Algoritmos con Julia*](https://sadit.github.io/ALGO-IR/) por
 Dr. Eric Sadit Téllez Ávila
