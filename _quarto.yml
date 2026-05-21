@@ -14,6 +14,8 @@ website:
         text: Sobre esta página
       - text: Unidades
         menu:
+          - href: unidad-5/index.qmd
+            text: "Unidad 5 — Búsqueda por comparación"
           - href: unidad-6/index.qmd
             text: "Unidad 6 — Intersección de conjuntos"
       - icon: github
@@ -30,6 +32,8 @@ website:
             href: index.qmd
       - section: "Unidades publicadas"
         contents:
+          - text: "Unidad 5 — Búsqueda por comparación"
+            href: unidad-5/index.qmd
           - text: "Unidad 6 — Intersección de conjuntos"
             href: unidad-6/index.qmd
 

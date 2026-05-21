@@ -33,6 +33,16 @@ en la barra superior.
 
 A medida que avanzo en el curso voy agregando más unidades aquí.
 
+### Unidad 5 — Algoritmos de búsqueda en el modelo de comparación
+
+Análisis experimental de algoritmos de búsqueda sobre listas ordenadas.
+Se comparan cuatro estrategias —búsqueda binaria, $B_0$ secuencial, $B_1$
+doblada y $B_2$ doblemente doblada— sobre listas de posteo reales con
+distintos niveles de perturbación y cuatro distribuciones de consultas.
+Verificación empírica de las cotas teóricas de Bentley y Yao (1976).
+
+[Ir al reporte →](unidad-5/index.qmd){.btn-portafolio}
+
 ### Unidad 6 — Algoritmos de intersección y unión de conjuntos
 
 Diseño y comparación de estrategias para resolver el problema de
