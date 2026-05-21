@@ -1,0 +1,27 @@
+# Quarto
+.quarto/
+*_files/
+*_cache/
+
+# Julia
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# IMPORTANTE: NO ignoramos docs/ porque GitHub Pages lo necesita
+# !docs/
+
+# IMPORTANTE: NO ignoramos _freeze/ porque acelera renders en CI
+# (es opcional, pero recomendado)
+
+/.quarto/
+**/*.quarto_ipynb

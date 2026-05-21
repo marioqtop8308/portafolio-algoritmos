@@ -1,0 +1,53 @@
+---
+title: "Reportes del curso Análisis de Algoritmos"
+subtitle: "Portafolio de prácticas — TSU en Servicios en la Nube"
+lang: es-MX
+---
+
+::: {.callout-note title="Ficha del estudiante" icon=false}
+**Institución:** INFOTEC — Centro de Investigación e Innovación en
+Tecnologías de la Información y Comunicación  
+**Programa:** Técnico Superior Universitario en Servicios en la Nube  
+**Materia:** Análisis de Algoritmos  
+**Estudiante:** Mario Galván Rosales  
+**Curso de referencia:** [*Curso Introductorio al Análisis de
+Algoritmos con Julia*](https://sadit.github.io/ALGO-IR/) por
+Dr. Eric Sadit Téllez Ávila
+:::
+
+## Sobre esta página
+
+En este sitio recopilo los reportes de las prácticas que voy
+desarrollando como parte del curso de Análisis de Algoritmos. Cada
+unidad corresponde a una actividad evaluable del programa, e incluye
+tanto la implementación de los algoritmos en Julia como el análisis
+experimental sobre datos reales.
+
+Los reportes están escritos con [Quarto](https://quarto.org) y se
+compilan a partir de archivos `.qmd` que combinan texto explicativo,
+código Julia ejecutable y gráficos generados automáticamente. El
+código fuente completo está disponible en el repositorio enlazado
+en la barra superior.
+
+## Unidades publicadas
+
+A medida que avanzo en el curso voy agregando más unidades aquí.
+
+### Unidad 6 — Algoritmos de intersección y unión de conjuntos
+
+Diseño y comparación de estrategias para resolver el problema de
+intersección de listas ordenadas, motivado por la operación
+fundamental en motores de búsqueda. Se implementan cinco
+configuraciones (Merge clásico, Baeza-Yates parametrizado con tres
+búsquedas distintas, y Barbay-Kenyon) y se comparan empíricamente
+sobre 600 instancias reales de posting lists.
+
+[Ir al reporte →](unidad-6/index.qmd){.btn-portafolio}
+
+## Sobre el código
+
+Todas las implementaciones están escritas en Julia 1.10 y los
+reportes usan los paquetes `JSON`, `CodecZlib`, `Plots`, `StatsPlots`,
+`Statistics` y `Random`. Para reproducir cualquiera de los reportes
+basta con clonar el repositorio y ejecutar `quarto render` desde la
+raíz del proyecto.

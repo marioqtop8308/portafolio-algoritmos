@@ -1,0 +1,54 @@
+project:
+  type: website
+  output-dir: docs       # GitHub Pages servirá desde aquí
+
+website:
+  title: "Reportes del curso Análisis de Algoritmos"
+  description: "Portafolio de prácticas — Mario Galván Rosales, INFOTEC"
+
+  navbar:
+    background: primary
+    search: true
+    right:
+      - href: index.qmd
+        text: Sobre esta página
+      - text: Unidades
+        menu:
+          - href: unidad-6/index.qmd
+            text: "Unidad 6 — Intersección de conjuntos"
+      - icon: github
+        href: https://github.com/marioqtop8308/portafolio-algoritmos
+        text: Repositorio
+
+  sidebar:
+    style: docked
+    background: light
+    contents:
+      - section: "Información"
+        contents:
+          - text: "Sobre esta página"
+            href: index.qmd
+      - section: "Unidades publicadas"
+        contents:
+          - text: "Unidad 6 — Intersección de conjuntos"
+            href: unidad-6/index.qmd
+
+  page-footer:
+    left: "© 2026 Mario Galván Rosales · INFOTEC"
+    right: "Hecho con [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    code-fold: false
+    code-tools: false
+    fig-width: 8
+    fig-height: 5
+    lang: es
+
+execute:
+  freeze: auto           # cachea celdas ya ejecutadas (acelera renders sucesivos)

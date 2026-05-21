@@ -1,0 +1,194 @@
+/* ============================================================
+   Tema institucional INFOTEC — Vino y dorado
+   ============================================================ */
+
+/* Paleta de colores */
+:root {
+  --bs-primary: #6f1d3a;
+  --bs-primary-rgb: 111, 29, 58;
+  --infotec-vino: #6f1d3a;
+  --infotec-vino-oscuro: #5a172f;
+  --infotec-vino-claro: #8a3454;
+  --infotec-dorado: #d4b876;
+  --infotec-dorado-oscuro: #b89859;
+  --infotec-crema: #f9f4e6;
+  --infotec-borde: #e8dcc3;
+}
+
+/* Navbar */
+.navbar {
+  background-color: #6f1d3a !important;
+  border-bottom: 4px solid #d4b876;
+}
+
+.navbar-brand,
+.navbar-nav .nav-link {
+  color: #f9f4e6 !important;
+  font-weight: 500;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #d4b876 !important;
+}
+
+.navbar-nav .nav-link.active {
+  color: #d4b876 !important;
+}
+
+/* Sidebar */
+.sidebar-title {
+  color: #6f1d3a;
+  font-weight: 600;
+  border-bottom: 2px solid #d4b876;
+  padding-bottom: 0.3em;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a:hover {
+  color: #6f1d3a !important;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar nav[role="doc-toc"] ul > li > ul > li > a.active {
+  border-left-color: #d4b876 !important;
+  color: #6f1d3a !important;
+  font-weight: 600;
+}
+
+/* Títulos del documento */
+h1.title {
+  color: #6f1d3a;
+  border-bottom: 3px solid #d4b876;
+  padding-bottom: 0.4em;
+}
+
+h2 {
+  color: #6f1d3a;
+  border-bottom: 1px solid #e8dcc3;
+  padding-bottom: 0.2em;
+  margin-top: 1.8em;
+}
+
+h3 {
+  color: #8a3454;
+  margin-top: 1.4em;
+}
+
+h4 {
+  color: #6f1d3a;
+}
+
+/* Enlaces */
+a {
+  color: #6f1d3a;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #b89859;
+  text-decoration: underline;
+}
+
+/* Tarjetas (callouts) */
+.callout-note {
+  border-left-color: #d4b876 !important;
+  background-color: #f9f4e6;
+}
+
+.callout-note .callout-icon::before {
+  background-color: #d4b876 !important;
+}
+
+.callout-note .callout-title {
+  color: #6f1d3a;
+  font-weight: 600;
+}
+
+/* Bloques de código */
+div.sourceCode {
+  background-color: #fdfaf3;
+  border: 1px solid #e8dcc3;
+  border-radius: 4px;
+}
+
+pre code {
+  color: #2a1a20;
+}
+
+/* Tablas */
+table {
+  border-top: 2px solid #6f1d3a;
+  border-bottom: 2px solid #6f1d3a;
+}
+
+table thead {
+  background-color: #6f1d3a;
+  color: #f9f4e6;
+}
+
+table thead th {
+  color: #f9f4e6 !important;
+  font-weight: 600;
+  border-color: #d4b876;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: #fdfaf3;
+}
+
+/* Botón personalizado */
+.btn-portafolio {
+  background-color: #6f1d3a;
+  color: #f9f4e6 !important;
+  padding: 0.6em 1.4em;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0.5em 0;
+  border: 2px solid #d4b876;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-portafolio:hover {
+  background-color: #5a172f;
+  color: #d4b876 !important;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(111, 29, 58, 0.2);
+}
+
+/* Footer */
+.page-footer,
+.nav-footer {
+  background-color: #6f1d3a;
+  color: #f9f4e6;
+  border-top: 4px solid #d4b876;
+}
+
+.page-footer a,
+.nav-footer a {
+  color: #d4b876;
+}
+
+.page-footer a:hover,
+.nav-footer a:hover {
+  color: #f9f4e6;
+}
+
+/* Citas en bloque */
+blockquote {
+  border-left: 4px solid #d4b876;
+  background-color: #fdfaf3;
+  padding: 0.8em 1.2em;
+  color: #2a1a20;
+  font-style: italic;
+}
+
+/* Código inline */
+code:not(pre code) {
+  color: #6f1d3a;
+  background-color: #fdfaf3;
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}

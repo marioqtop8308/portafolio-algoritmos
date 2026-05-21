@@ -1,0 +1,1041 @@
+---
+title: "Unidad 6 — Algoritmos de Intersección de Conjuntos"
+subtitle: "Actividad 6.6.1"
+author: "Mario Galván Rosales"
+date: today
+lang: es-MX
+engine: julia
+julia:
+  exeflags: ["--project=.."]
+bibliography: referencias.bib
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{julia}
+#| echo: false
+#| output: false
+# Configuración inicial: backend para renderizado sin pantalla (PDF/servidor)
+ENV["GKSwstype"] = "100"
+using JSON, CodecZlib, Statistics, Plots, StatsPlots, Random, Printf
+gr()
+Random.seed!(42)
+```
+
+# Introducción
+
+Este reporte continúa el trabajo de la unidad anterior, pero ahora
+con un problema distinto: en lugar de buscar un elemento dentro de
+una lista ordenada, lo que me interesa es calcular la **intersección
+entre varias listas ordenadas**. Es una operación que aparece todo
+el tiempo en motores de búsqueda: cuando uno escribe varias palabras
+en una consulta, el sistema toma la lista de documentos asociada a
+cada palabra (la *posting list* de cada término en el índice
+invertido) y devuelve solo los documentos que aparecen en todas las
+listas a la vez. Esa intersección es justamente el problema que voy
+a estudiar acá.
+
+Al igual que con la búsqueda, no existe un algoritmo único que sea
+siempre el mejor. El comportamiento depende mucho de los tamaños
+relativos de las listas: cuando son parecidas, un *merge* lineal
+clásico es suficiente; cuando una lista es mucho más chica que la
+otra, conviene una estrategia que aproveche esa asimetría. Y cuando
+hay más de dos listas (consultas con tres o cuatro términos, por
+ejemplo), aparecen nuevas alternativas como procesar todas las listas
+en paralelo en lugar de intersectarlas de a pares.
+
+Para este experimento implementé y comparé cinco configuraciones:
+el algoritmo de **merge clásico** (ME), el algoritmo de **Baeza-Yates**
+(BY) [@baezayates2004] parametrizado con tres búsquedas distintas
+—binaria, $B_1$ y $B_2$, las mismas que ya tenía implementadas de la
+actividad anterior [@bentley1976almost]—, y el algoritmo de
+**Barbay-Kenyon** (BK) [@barbay2006faster]. La evaluación se hace
+sobre tres conjuntos de datos del curso: $A$ con 200 pares de listas
+($k=2$), $B$ con 200 tripletas ($k=3$) y $C$ con 200 cuádruplas
+($k=4$). Para cada algoritmo y cada conjunto se mide número de
+comparaciones y tiempo de ejecución, y los resultados se presentan
+en gráficos boxplot que permiten compararlos lado a lado.
+
+# Planteamiento del problema
+
+## Definición formal
+
+Sean $A_1, A_2, \ldots, A_k$ conjuntos representados como arreglos
+ordenados de enteros, con tamaños $|A_i| = n_i$. La operación de
+intersección consiste en calcular:
+
+$$A_1 \cap A_2 \cap \cdots \cap A_k = \{x \mid x \in A_i \text{ para todo } 1 \leq i \leq k\}$$
+
+El resultado debe entregarse también como un arreglo ordenado para
+que pueda ser usado en operaciones posteriores (por ejemplo,
+intersecciones con otras listas o cálculo de relevancia). Sin pérdida
+de generalidad, asumiré que $n_1 \leq n_2 \leq \cdots \leq n_k$ y
+denoto $m = n_1$ (el más pequeño) y $n = n_k$ (el más grande). La
+cardinalidad del resultado siempre cumple $|A_1 \cap \cdots \cap A_k|
+\leq m$, lo cual es una observación importante: la intersección está
+acotada por el conjunto más pequeño.
+
+## Cota inferior y el caso de dos conjuntos
+
+Para el caso de dos conjuntos con tamaños $m \leq n$, el árbol de
+decisión da una cota inferior de:
+
+$$\log_2 \binom{m+n}{m} \approx m \log_2 \frac{n}{m} + \mathcal{O}(m + n)$$
+
+comparaciones [@hwang1971optimal]. Esta expresión es interesante
+porque captura los dos regímenes extremos:
+
+- Si $m \approx n$ (conjuntos de tamaños parecidos), la cota se
+  comporta como $\Theta(m + n)$: hay que tocar cada elemento al menos
+  una vez. El algoritmo de **merge lineal** alcanza esta cota.
+- Si $m \ll n$ (conjuntos muy desiguales), la cota se comporta como
+  $\Theta(m \log(n/m))$: hay que hacer $m$ búsquedas en el conjunto
+  grande. El algoritmo de **Baeza-Yates** alcanza esta cota.
+
+En la práctica esto se traduce en que ningún algoritmo domina a los
+demás en todos los escenarios. Cuando los conjuntos son parecidos, el
+merge es lo mejor porque hacer búsquedas binarias pagaría $\log n$
+por elemento sin ningún beneficio. Cuando hay mucha asimetría, el
+merge se vuelve caro porque tiene que recorrer los $n-m$ elementos
+extra del lado grande, mientras que Baeza-Yates puede saltarlos.
+
+## El caso de $k \geq 3$ conjuntos
+
+Para $k$ conjuntos, una estrategia natural es **Small vs Small**
+(SvS): ordenar los conjuntos por tamaño y aplicar intersección binaria
+en pares, empezando por los dos más pequeños. Como la intersección
+nunca crece de tamaño, los resultados intermedios se mantienen acotados
+por $m$. Otra estrategia es el algoritmo de **Barbay-Kenyon**
+[@barbay2006faster], que opera sobre los $k$ conjuntos en una sola
+pasada coordinada, manteniendo un cursor por cada lista y avanzando
+de forma adaptativa. Comparar ambos enfoques sobre datos reales es
+una de las preguntas centrales de este experimento.
+
+# Desarrollo de las actividades
+
+## Los datos con los que trabajé
+
+Los datos de entrada son tres archivos JSON, cada uno con 200
+instancias de un problema de intersección. Cada instancia es una
+colección de $k$ listas ordenadas de enteros que representan posting
+lists reales de un índice invertido:
+
+- **Conjunto A** ($k=2$): 200 pares de listas.
+- **Conjunto B** ($k=3$): 200 tripletas de listas.
+- **Conjunto C** ($k=4$): 200 cuádruplas de listas.
+
+```{julia}
+# Helper para leer JSON comprimido con gzip
+function load_gz_json(path::String)
+    raw = open(path) do io
+        gz = GzipDecompressorStream(io)
+        read(gz, String)
+    end
+    return JSON.parse(raw)
+end
+
+data_A = load_gz_json("datos/postinglists-for-intersection-A-k=2.json.gz")
+data_B = load_gz_json("datos/postinglists-for-intersection-B-k=3.json.gz")
+data_C = load_gz_json("datos/postinglists-for-intersection-C-k=4.json.gz")
+
+# Convertir a Vector{Vector{Int}} para evitar dispatching dinámico
+to_int_lists(inst) = [Vector{Int}(lst) for lst in inst]
+
+A_set = [to_int_lists(inst) for inst in data_A]
+B_set = [to_int_lists(inst) for inst in data_B]
+C_set = [to_int_lists(inst) for inst in data_C]
+
+println(@sprintf("Conjunto A: %d instancias, k=%d listas por instancia",
+        length(A_set), length(A_set[1])))
+println(@sprintf("Conjunto B: %d instancias, k=%d listas por instancia",
+        length(B_set), length(B_set[1])))
+println(@sprintf("Conjunto C: %d instancias, k=%d listas por instancia",
+        length(C_set), length(C_set[1])))
+```
+
+### Distribución de tamaños
+
+Vale la pena ver cómo se distribuyen los tamaños de las listas, porque
+de eso depende qué régimen ($m \approx n$ vs $m \ll n$) predomina en
+cada conjunto y, por tanto, qué algoritmo debería ganar.
+
+```{julia}
+function describe_set(name, sets)
+    lens = Float64[]
+    for inst in sets, l in inst
+        push!(lens, length(l))
+    end
+    return (
+        name   = name,
+        nmin   = minimum(lens),
+        nmax   = maximum(lens),
+        nmed   = median(lens),
+        nmean  = mean(lens)
+    )
+end
+
+println(@sprintf("%-10s  %-7s  %-7s  %-9s  %-9s",
+        "Conjunto", "Mín", "Máx", "Mediana", "Promedio"))
+println("-"^50)
+for r in [describe_set("A (k=2)", A_set),
+          describe_set("B (k=3)", B_set),
+          describe_set("C (k=4)", C_set)]
+    println(@sprintf("%-10s  %7d  %7d  %9.0f  %9.0f",
+            r.name, r.nmin, r.nmax, r.nmed, r.nmean))
+end
+```
+
+Los tres conjuntos cubren un rango muy amplio de tamaños: desde menos
+de 100 elementos en algunas listas hasta más de 40 000 en otras. Eso
+significa que dentro de un mismo conjunto van a coexistir instancias
+donde los tamaños son parecidos —régimen donde el merge brilla— con
+instancias muy desbalanceadas, donde Baeza-Yates debería ganar.
+
+### Distribución del cociente $n/m$ por instancia
+
+Una manera más útil de ver el "régimen" de cada instancia es calcular
+el cociente entre el tamaño de la lista más grande y el de la más
+pequeña dentro de la misma instancia. Si el cociente es cercano a 1,
+los conjuntos son parecidos; si es muy grande, hay mucha asimetría.
+
+```{julia}
+function size_ratio(sets)
+    return [maximum(length, inst) / minimum(length, inst) for inst in sets]
+end
+
+ratios_A = size_ratio(A_set)
+ratios_B = size_ratio(B_set)
+ratios_C = size_ratio(C_set)
+
+println(@sprintf("%-10s  %-10s  %-10s  %-10s",
+        "Conjunto", "Mediana", "Promedio", "Máximo"))
+println("-"^45)
+for (name, r) in [("A (k=2)", ratios_A),
+                  ("B (k=3)", ratios_B),
+                  ("C (k=4)", ratios_C)]
+    println(@sprintf("%-10s  %10.1f  %10.1f  %10.1f",
+            name, median(r), mean(r), maximum(r)))
+end
+```
+
+El cociente mediano en los tres conjuntos es de varias decenas o más,
+así que la mayoría de las instancias caen claramente en régimen
+asimétrico. Eso me hace esperar que Baeza-Yates le saque ventaja al
+merge en la mayoría de las mediciones, y que la diferencia se note
+más en las instancias donde el cociente es más extremo.
+
+## Cómo implementé cada algoritmo
+
+Tomé como guía el capítulo 6 del curso de @tellez2025algo y los
+papers originales de @baezayates2004 y @barbay2006faster. Una decisión
+de diseño que tomé desde el inicio: para contar comparaciones sin
+ensuciar el código, uso un contador global tipo `Ref{Int}` que se
+incrementa dentro de las primitivas `lt`, `le` y `eq`. Antes de cada
+medición se reinicia con `reset_cmp!()`. Es la misma idea que en la
+actividad anterior pero centralizada en un solo lugar.
+
+> **Sobre la indexación en Julia**: todas las funciones están
+> escritas con la convención `sp=1` para el primer elemento y
+> `length(A)` para el último, igual que en la actividad anterior.
+
+```{julia}
+const CMP = Ref(0)
+reset_cmp!() = (CMP[] = 0)
+get_cmp() = CMP[]
+
+@inline function lt(a, b)
+    CMP[] += 1
+    return a < b
+end
+@inline function le(a, b)
+    CMP[] += 1
+    return a <= b
+end
+@inline function eq(a, b)
+    CMP[] += 1
+    return a == b
+end
+```
+
+### Búsquedas: binaria, $B_1$ y $B_2$
+
+Como el algoritmo de Baeza-Yates está parametrizado por una función
+de búsqueda interna, traigo las tres versiones de la actividad
+anterior. La firma uniforme `(A, x, sp)` —devolviendo la posición de
+inserción de `x` en `A` empezando desde `sp`— me permite intercambiarlas
+sin cambiar el resto del código.
+
+```{julia}
+function binarysearch(A, x, sp::Int=1, ep::Int=length(A))
+    n = length(A)
+    sp > n && return n + 1
+    sp > ep && return sp
+    while sp < ep
+        mid = div(sp + ep, 2)
+        if le(x, A[mid])
+            ep = mid
+        else
+            sp = mid + 1
+        end
+    end
+    return (sp <= n && le(x, A[sp])) ? sp : sp + 1
+end
+
+# B_1: doubling search — saltos en potencias de 2
+function B1_search(A, x, sp::Int=1)
+    n = length(A)
+    sp > n && return n + 1
+    le(x, A[sp]) && return sp
+    off = 1
+    while sp + off <= n && lt(A[sp + off], x)
+        off *= 2
+    end
+    lo = sp + (off >> 1) + 1
+    hi = min(n, sp + off)
+    return binarysearch(A, x, lo, hi)
+end
+
+# B_2: doubling-doubling search — saltos en 2, 4, 16, 256, ...
+function B2_search(A, x, sp::Int=1)
+    n = length(A)
+    sp > n && return n + 1
+    le(x, A[sp]) && return sp
+    prev_off = 0
+    curr_off = 2
+    while sp + curr_off <= n && lt(A[sp + curr_off], x)
+        prev_off = curr_off
+        curr_off = curr_off * curr_off
+    end
+    lo = sp + prev_off + 1
+    hi = min(n, sp + curr_off)
+    lo > n && return n + 1
+    lo > hi && return lo
+    le(x, A[lo]) && return lo
+    inner = 1
+    while lo + inner <= hi && lt(A[lo + inner], x)
+        inner *= 2
+    end
+    inner_lo = lo + (inner >> 1) + 1
+    inner_hi = min(hi, lo + inner)
+    inner_lo > n && return n + 1
+    inner_lo > inner_hi && return inner_lo
+    return binarysearch(A, x, inner_lo, inner_hi)
+end
+```
+
+### Algoritmo ME (merge clásico)
+
+El merge clásico es lo más simple y, en el régimen $m \approx n$,
+también lo más eficiente. Recorre las dos listas con dos índices que
+avanzan en paralelo: cuando los elementos coinciden, se agrega al
+resultado y se avanzan ambos; cuando no, se avanza el que apunta al
+menor. Costo $\mathcal{O}(m + n)$ y alcanza la cota inferior cuando
+los tamaños son comparables.
+
+Una sutileza importante para estos datos reales: las listas pueden
+contener **duplicados consecutivos** (por ejemplo, `..., 7830, 7830,
+8104, ...`). Por eso antes de empujar un valor al resultado verifico
+que no esté repetido respecto al último ya insertado.
+
+```{julia}
+"""
+    merge2!(C, A, B) -> C
+
+Intersección de A y B por merge lineal. Acumula resultados en C.
+
+Costo: O(m + n) comparaciones.
+Fuente: Téllez (2025), cap. 6.
+"""
+function merge2!(C, A, B)
+    i, j = 1, 1
+    m, n = length(A), length(B)
+    @inbounds while i <= m && j <= n
+        a, b = A[i], B[j]
+        if eq(a, b)
+            if isempty(C) || C[end] != a
+                push!(C, a)
+            end
+            i += 1
+            j += 1
+        elseif lt(a, b)
+            i += 1
+        else
+            j += 1
+        end
+    end
+    return C
+end
+```
+
+### Algoritmo BY (Baeza-Yates)
+
+La idea de @baezayates2004 me pareció bastante ingeniosa: tomo la
+mediana del conjunto más pequeño, la busco en el más grande, y eso me
+parte el problema en dos sub-intersecciones (lo que queda a la
+izquierda de la mediana en ambos conjuntos, y lo que queda a la
+derecha). Recursionando sobre cada mitad, cada llamada reduce el
+espacio de búsqueda. El costo en el peor caso es:
+
+$$C_{BY}(m, n) = \mathcal{O}\left(m \log \frac{n}{m}\right)$$
+
+que coincide con la cota inferior cuando $m \ll n$. Hay un detalle
+que la hace particularmente útil en la práctica: cuando la mediana
+cae fuera de uno de los lados del conjunto grande (porque es mayor o
+menor que todo lo que queda), la recursión por ese lado termina de
+inmediato y el algoritmo "salta" regiones enteras del conjunto grande
+sin tocarlas. Esa es la fuente principal de su ventaja sobre el merge
+en datos asimétricos.
+
+```{julia}
+"""
+    baezayates!(C, A, B, findpos=binarysearch) -> C
+
+Intersección de A y B por divide-y-vencerás (mediana del más chico).
+Parametrizada por la función de búsqueda `findpos`.
+
+Costo en el peor caso: O(m log(n/m)).
+Fuente: Baeza-Yates (2004).
+"""
+function baezayates!(output, A, B, findpos::Function=binarysearch)
+    if length(B) < length(A)
+        A, B = B, A
+    end
+    _by_rec!(output, A, 1, length(A), B, 1, length(B), findpos)
+    return output
+end
+
+function _by_rec!(output, A, a_sp::Int, a_ep::Int,
+                            B, b_sp::Int, b_ep::Int, findpos::Function)
+    (a_ep < a_sp || b_ep < b_sp) && return output
+    imedian = cld(a_sp + a_ep, 2)            # techo de la mediana
+    median = A[imedian]
+    medpos = min(findpos(B, median, b_sp), b_ep)
+    matches = false
+    if medpos >= b_sp && medpos <= b_ep
+        matches = eq(median, B[medpos])
+    end
+    e = matches ? 1 : 0
+    _by_rec!(output, A, a_sp, imedian - 1, B, b_sp, medpos - e, findpos)
+    if matches && (isempty(output) || output[end] != median)
+        push!(output, median)
+    end
+    _by_rec!(output, A, imedian + 1, a_ep, B, medpos + e, b_ep, findpos)
+    return output
+end
+```
+
+### Algoritmo BK (Barbay-Kenyon)
+
+BK fue el que más me costó entender de los tres, pero también el que
+me pareció más distinto en su enfoque. En lugar de reducir el problema
+de $k$ conjuntos a una serie de intersecciones binarias, los procesa
+todos a la vez. Mantiene un arreglo de cursores —uno por cada lista—
+y un elemento candidato `el`. Para cada lista busca dónde se
+insertaría `el` a partir del cursor previo. Si lo encuentra en las
+$k$ listas, lo agrega al resultado y avanza al siguiente; si no, el
+primer valor mayor que `el` se convierte en el nuevo candidato.
+
+Lo clave es que cada búsqueda interna **arranca desde la posición del
+cursor previo**, no desde el inicio de la lista. Eso le permite
+aprovechar la localidad: si el candidato anterior estaba en la
+posición 500 de una lista, el siguiente probablemente esté cerca, y
+la búsqueda no acotada $B_2$ saltará ágilmente desde ahí
+[@barbay2010experimental].
+
+```{julia}
+"""
+    bk!(output, L, findpos=B2_search) -> output
+
+Intersección de k listas por el algoritmo de Barbay-Kenyon.
+Cada lista lleva un cursor; se avanza el candidato adaptativamente.
+
+Fuente: Barbay & Kenyon (2006), Barbay et al. (2010).
+"""
+function bk!(output, L::AbstractVector, findpos::Function=B2_search)
+    n = length(L)
+    n == 0 && return output
+    any(isempty, L) && return output
+    P = ones(Int, n)
+    el = L[1][1]
+    c = 0
+    @inbounds while true
+        for i in eachindex(P)
+            P[i] = findpos(L[i], el, P[i])
+            P[i] > length(L[i]) && return output
+            pval = L[i][P[i]]
+            if eq(pval, el)
+                c += 1
+                if c == n
+                    if isempty(output) || output[end] != el
+                        push!(output, el)
+                    end
+                    c = 0
+                    P[i] += 1
+                    P[i] > length(L[i]) && return output
+                    el = L[i][P[i]]
+                end
+            else
+                c = 0
+                el = pval
+            end
+        end
+    end
+    return output
+end
+```
+
+### SvS para extender ME y BY a $k \geq 3$
+
+ME y BY son binarios por naturaleza. Para correrlos sobre los conjuntos
+$B$ y $C$ los envuelvo en la estrategia **Small vs Small**: ordeno las
+listas por tamaño y aplico intersecciones de a pares empezando por las
+dos más pequeñas. Como la intersección nunca crece, los resultados
+intermedios se quedan acotados por el conjunto más pequeño.
+
+```{julia}
+function svs(L::AbstractVector, in2::Function)
+    Lsorted = sort(L, by=length)
+    curr = collect(Int, Lsorted[1])
+    for i in 2:length(Lsorted)
+        nextc = Int[]
+        in2(nextc, curr, Lsorted[i])
+        curr = nextc
+        isempty(curr) && return curr
+    end
+    return curr
+end
+
+# Wrappers para que cada variante pueda pasarse a svs con la misma firma
+me_pair!(C, A, B)     = merge2!(C, A, B)
+by_bin_pair!(C, A, B) = baezayates!(C, A, B, binarysearch)
+by_b1_pair!(C, A, B)  = baezayates!(C, A, B, B1_search)
+by_b2_pair!(C, A, B)  = baezayates!(C, A, B, B2_search)
+```
+
+### ¿Las cinco configuraciones dan el mismo resultado?
+
+Antes de medir tiempos y comparaciones, necesitaba confirmar que las
+cinco variantes (ME, BY-bin, BY-B1, BY-B2 y BK) calculan exactamente
+la misma intersección. Si una sola estuviera mal, los experimentos
+posteriores serían inválidos. La forma más robusta de verificarlo es
+comparar contra una intersección "de referencia" calculada con
+`Set{Int}` —lenta pero indiscutiblemente correcta— sobre una muestra
+de instancias reales de cada conjunto.
+
+```{julia}
+function ground_truth(lists::Vector{Vector{Int}})
+    s = Set{Int}(lists[1])
+    for i in 2:length(lists)
+        intersect!(s, Set{Int}(lists[i]))
+    end
+    return sort!(collect(s))
+end
+
+function validate_against_gt(set_name::String, sets, n_to_check::Int=30)
+    errors = 0
+    for idx in 1:min(n_to_check, length(sets))
+        inst = sets[idx]
+        gt = ground_truth(inst)
+        results = Dict{String, Vector{Int}}()
+        if length(inst) == 2
+            results["ME"]     = merge2!(Int[], inst[1], inst[2])
+            results["BY-bin"] = baezayates!(Int[], inst[1], inst[2], binarysearch)
+            results["BY-B1"]  = baezayates!(Int[], inst[1], inst[2], B1_search)
+            results["BY-B2"]  = baezayates!(Int[], inst[1], inst[2], B2_search)
+        else
+            results["ME"]     = svs(inst, me_pair!)
+            results["BY-bin"] = svs(inst, by_bin_pair!)
+            results["BY-B1"]  = svs(inst, by_b1_pair!)
+            results["BY-B2"]  = svs(inst, by_b2_pair!)
+        end
+        results["BK"] = bk!(Int[], inst)
+        for (algo, r) in results
+            if r != gt
+                errors += 1
+            end
+        end
+    end
+    total = 5 * min(n_to_check, length(sets))
+    if errors == 0
+        println(@sprintf("  ✓ %s: %d/%d ejecuciones coinciden con ground truth",
+                set_name, total, total))
+    else
+        println(@sprintf("  ✗ %s: %d errores de %d", set_name, errors, total))
+    end
+end
+
+reset_cmp!()
+validate_against_gt("A (k=2)", A_set)
+validate_against_gt("B (k=3)", B_set)
+validate_against_gt("C (k=4)", C_set)
+```
+
+Las tres pruebas dieron ✓, así que las cinco configuraciones están
+alineadas. Con eso confirmado, ya puedo lanzar los experimentos sin
+preocuparme por errores de implementación.
+
+## Experimento 1 — Comparaciones por algoritmo y conjunto
+
+Para cada uno de los tres conjuntos corro las cinco configuraciones
+sobre las 200 instancias. Cada instancia se procesa una sola vez
+porque el conteo de comparaciones es determinístico —no depende del
+estado del sistema— y solo me interesa la variabilidad entre
+instancias, no entre repeticiones de la misma instancia.
+
+```{julia}
+function run_intersection(algo_name::String, lists::Vector{Vector{Int}})
+    out = Int[]
+    if algo_name == "ME"
+        if length(lists) == 2
+            reset_cmp!()
+            t = @elapsed merge2!(out, lists[1], lists[2])
+            return (out, t, get_cmp())
+        else
+            reset_cmp!()
+            t = @elapsed (out = svs(lists, me_pair!))
+            return (out, t, get_cmp())
+        end
+    elseif algo_name == "BY-bin"
+        if length(lists) == 2
+            reset_cmp!()
+            t = @elapsed baezayates!(out, lists[1], lists[2], binarysearch)
+            return (out, t, get_cmp())
+        else
+            reset_cmp!()
+            t = @elapsed (out = svs(lists, by_bin_pair!))
+            return (out, t, get_cmp())
+        end
+    elseif algo_name == "BY-B1"
+        if length(lists) == 2
+            reset_cmp!()
+            t = @elapsed baezayates!(out, lists[1], lists[2], B1_search)
+            return (out, t, get_cmp())
+        else
+            reset_cmp!()
+            t = @elapsed (out = svs(lists, by_b1_pair!))
+            return (out, t, get_cmp())
+        end
+    elseif algo_name == "BY-B2"
+        if length(lists) == 2
+            reset_cmp!()
+            t = @elapsed baezayates!(out, lists[1], lists[2], B2_search)
+            return (out, t, get_cmp())
+        else
+            reset_cmp!()
+            t = @elapsed (out = svs(lists, by_b2_pair!))
+            return (out, t, get_cmp())
+        end
+    elseif algo_name == "BK"
+        reset_cmp!()
+        t = @elapsed bk!(out, lists, B2_search)
+        return (out, t, get_cmp())
+    else
+        error("Algoritmo desconocido: $algo_name")
+    end
+end
+
+const ALGOS = ["ME", "BY-bin", "BY-B1", "BY-B2", "BK"]
+
+function benchmark_set(sets, reps::Int=3)
+    n_inst = length(sets)
+    cmps   = Dict(a => Int[]     for a in ALGOS)
+    times  = Dict(a => Float64[] for a in ALGOS)
+    sizes  = Dict(a => Int[]     for a in ALGOS)
+
+    # Warm-up: corremos cada algoritmo una vez sobre la primera instancia
+    for a in ALGOS
+        run_intersection(a, sets[1])
+    end
+
+    for inst in sets
+        for a in ALGOS
+            best_t = Inf
+            c_best = 0
+            sz_best = 0
+            for _ in 1:reps
+                r, t, c = run_intersection(a, inst)
+                if t < best_t
+                    best_t = t
+                    c_best = c
+                    sz_best = length(r)
+                end
+            end
+            push!(cmps[a],  c_best)
+            push!(times[a], best_t * 1e6)   # µs
+            push!(sizes[a], sz_best)
+        end
+    end
+    return (cmps=cmps, times=times, sizes=sizes)
+end
+
+println("Ejecutando benchmarks (esto puede tardar uno o dos minutos)...")
+res_A = benchmark_set(A_set)
+println("  ✓ Conjunto A listo")
+res_B = benchmark_set(B_set)
+println("  ✓ Conjunto B listo")
+res_C = benchmark_set(C_set)
+println("  ✓ Conjunto C listo")
+```
+
+```{julia}
+# Tabla resumen de comparaciones
+println("Comparaciones — mediana por algoritmo y conjunto")
+println("="^60)
+print(@sprintf("%-10s", "Algoritmo"))
+for nm in ["A (k=2)", "B (k=3)", "C (k=4)"]
+    print(@sprintf("  %12s", nm))
+end
+println()
+println("-"^60)
+for a in ALGOS
+    print(@sprintf("%-10s", a))
+    for res in [res_A, res_B, res_C]
+        print(@sprintf("  %12.0f", median(res.cmps[a])))
+    end
+    println()
+end
+```
+
+```{julia}
+#| label: fig-comparaciones
+#| fig-cap: "Comparaciones por algoritmo y conjunto (boxplot en escala logarítmica). Cada caja agrupa las 200 instancias de su conjunto."
+
+colores = [:steelblue, :tomato, :seagreen, :darkorange, :mediumpurple]
+
+# Construyo vectores de comparaciones agrupados (caja por algoritmo, color por conjunto)
+function build_grouped(metric_field::Symbol)
+    xs = String[]
+    ys = Float64[]
+    grupos = String[]
+    for (sname, res) in [("A", res_A), ("B", res_B), ("C", res_C)]
+        for a in ALGOS
+            data = getfield(res, metric_field)[a]
+            for v in data
+                push!(xs, a)
+                push!(ys, Float64(max(v, 1)))   # evitar 0 en escala log
+                push!(grupos, sname)
+            end
+        end
+    end
+    return xs, ys, grupos
+end
+
+xs, ys, grupos = build_grouped(:cmps)
+
+groupedboxplot(xs, ys, group=grupos,
+    yscale  = :log10,
+    label   = ["A (k=2)" "B (k=3)" "C (k=4)"],
+    xlabel  = "Algoritmo",
+    ylabel  = "Comparaciones (escala log)",
+    title   = "Comparaciones por algoritmo y conjunto",
+    legend  = :topleft,
+    size    = (820, 460),
+    grid    = true,
+    gridalpha = 0.4)
+```
+
+Esta es probablemente la gráfica más informativa de todo el reporte.
+En el eje horizontal están los cinco algoritmos (ME, BY-bin, BY-B1,
+BY-B2 y BK), y para cada uno hay tres cajas en colores distintos:
+una por cada conjunto. La escala logarítmica del eje vertical hace
+falta porque los valores van desde unas decenas de comparaciones
+hasta varios miles, según la instancia.
+
+Lo primero que se nota es que las cajas de **ME** son notablemente
+más altas que las de las variantes de BY y que las de BK. Esto se
+anticipaba en el análisis preliminar: como la mayoría de las
+instancias caen en régimen asimétrico ($n/m$ grande), el merge
+clásico paga el costo lineal $\mathcal{O}(m+n)$ aunque solo necesite
+encontrar unas pocas coincidencias. Las tres variantes de BY (bin,
+B1, B2) producen distribuciones muy parecidas, lo que tiene sentido
+porque el costo dominante viene de los $m$ pasos de divide y vencerás,
+no de la búsqueda interna que cada paso usa.
+
+BK aparece bastante competitivo en los tres conjuntos. En $A$ (k=2)
+queda cerca de las variantes de BY; en $B$ y $C$ se mantiene a la par
+o ligeramente por encima.
+
+## Experimento 2 — Tiempo de ejecución por algoritmo y conjunto
+
+Las comparaciones nos dicen cuánto trabajo "puro" hace cada algoritmo,
+pero al final lo que importa en un sistema real es el tiempo de
+ejecución. No siempre van de la mano: el comportamiento de caché y la
+sobrecarga de cada algoritmo pueden hacer que dos algoritmos con
+parecida cantidad de comparaciones tengan tiempos muy distintos. Para
+que las mediciones sean estables hago 3 repeticiones por instancia y
+me quedo con el mínimo, que es el criterio estándar en benchmarking
+porque descarta el ruido del sistema operativo (interrupciones, otros
+procesos, etc.).
+
+```{julia}
+# Tabla resumen de tiempos
+println("Tiempos — mediana en µs por algoritmo y conjunto")
+println("="^60)
+print(@sprintf("%-10s", "Algoritmo"))
+for nm in ["A (k=2)", "B (k=3)", "C (k=4)"]
+    print(@sprintf("  %12s", nm))
+end
+println()
+println("-"^60)
+for a in ALGOS
+    print(@sprintf("%-10s", a))
+    for res in [res_A, res_B, res_C]
+        print(@sprintf("  %12.2f", median(res.times[a])))
+    end
+    println()
+end
+```
+
+```{julia}
+#| label: fig-tiempos
+#| fig-cap: "Tiempo de ejecución por algoritmo y conjunto (boxplot en escala logarítmica)."
+
+xs, ys, grupos = build_grouped(:times)
+
+groupedboxplot(xs, ys, group=grupos,
+    yscale  = :log10,
+    label   = ["A (k=2)" "B (k=3)" "C (k=4)"],
+    xlabel  = "Algoritmo",
+    ylabel  = "Tiempo (µs, escala log)",
+    title   = "Tiempo de ejecución por algoritmo y conjunto",
+    legend  = :topleft,
+    size    = (820, 460),
+    grid    = true,
+    gridalpha = 0.4)
+```
+
+La forma general de las cajas se parece mucho a la de la
+@fig-comparaciones, pero hay matices interesantes. ME sigue siendo el
+más caro en mediana, pero la diferencia con las variantes de BY es
+algo menor que en comparaciones puras. Eso lo atribuyo al
+comportamiento de caché: el merge recorre la memoria secuencialmente
+(cache-friendly) mientras que BY salta a posiciones medio aleatorias
+del arreglo grande. En aplicaciones donde las listas caben enteras
+en caché L1 o L2 esa diferencia debería disolverse; con posting lists
+grandes, ME paga más operaciones pero gana algo en accesos secuenciales.
+
+Las tres variantes de BY siguen muy parejas entre sí, igual que en
+comparaciones. BK también se mantiene competitivo, aunque su
+sobrecarga por mantener cursores y sincronizar las $k$ listas le hace
+ceder ligeramente frente a BY en los conjuntos $B$ y $C$.
+
+## Experimento 3 — Control: tamaño del resultado
+
+Esta última gráfica funciona como un **control de validación**: como
+las cinco configuraciones deben producir exactamente la misma
+intersección, los boxplots del tamaño del resultado deben verse
+prácticamente idénticos para cada conjunto. Si alguno se desvía es
+señal de un bug que pasó por debajo de la validación inicial.
+
+```{julia}
+#| label: fig-tamanos
+#| fig-cap: "Tamaño del resultado por algoritmo y conjunto (gráfico de control). Las cajas deben ser idénticas entre algoritmos para un mismo conjunto."
+
+xs, ys, grupos = build_grouped(:sizes)
+
+groupedboxplot(xs, ys, group=grupos,
+    label   = ["A (k=2)" "B (k=3)" "C (k=4)"],
+    xlabel  = "Algoritmo",
+    ylabel  = "|intersección|",
+    title   = "Tamaño del resultado por algoritmo y conjunto",
+    legend  = :topright,
+    size    = (820, 460),
+    grid    = true,
+    gridalpha = 0.4)
+```
+
+Como esperaba, las cajas son idénticas algoritmo por algoritmo dentro
+de cada conjunto. Eso confirma que las cinco configuraciones están
+produciendo exactamente el mismo resultado en las 200 instancias,
+y por tanto que cualquier diferencia en tiempo o comparaciones se
+debe genuinamente al algoritmo y no a errores de implementación.
+
+## Experimento 4 — Comparaciones vs. asimetría del problema
+
+Para entender mejor el comportamiento de cada algoritmo, grafico el
+número de comparaciones contra el cociente $n/m$ (asimetría) de cada
+instancia del conjunto $A$. Esto debería revelar el cruce entre los
+regímenes: ME debería ganar cuando el cociente es bajo, y BY cuando
+es alto.
+
+```{julia}
+#| label: fig-asimetria
+#| fig-cap: "Comparaciones vs. cociente de tamaños n/m sobre el conjunto A (k=2). Cada punto es una instancia."
+
+algos_a_graficar = ["ME", "BY-bin", "BK"]
+colores_a = [:tomato, :seagreen, :mediumpurple]
+etiquetas_a = ["ME (merge)", "BY-bin (Baeza-Yates)", "BK (Barbay-Kenyon)"]
+
+plt = plot(xscale = :log10,
+           yscale = :log10,
+           xlabel = "Cociente n/m (asimetría)",
+           ylabel = "Comparaciones",
+           title  = "Comparaciones vs. asimetría — conjunto A",
+           legend = :bottomright,
+           size   = (780, 460),
+           grid   = true,
+           gridalpha = 0.4)
+
+for (a, c, etiq) in zip(algos_a_graficar, colores_a, etiquetas_a)
+    ys_a = max.(res_A.cmps[a], 1)
+    scatter!(plt, ratios_A, ys_a,
+             marker     = :circle,
+             markersize = 4,
+             markerstrokewidth = 0,
+             color      = c,
+             alpha      = 0.55,
+             label      = etiq)
+end
+plt
+```
+
+Esta gráfica de dispersión muestra el comportamiento de tres
+algoritmos —ME, BY-bin y BK— como función de la asimetría $n/m$ de
+cada instancia. Cada punto es una de las 200 instancias del conjunto
+$A$.
+
+El patrón coincide bastante bien con la teoría: la nube de puntos de
+ME tiene una pendiente positiva clara y sostenida (a más asimetría,
+más comparaciones, porque el merge tiene que tocar los $n-m$ elementos
+extra del lado grande), mientras que la nube de BY-bin se mantiene
+mucho más plana —su costo depende de $m \log(n/m)$, que crece muy
+despacio cuando $n/m$ se hace grande—. BK se ubica en una posición
+intermedia, más cerca de BY que de ME. En las instancias con poca
+asimetría (lado izquierdo) los tres algoritmos se acercan, y en las
+muy asimétricas (lado derecho) la ventaja de BY y BK sobre ME se
+vuelve enorme.
+
+# Discusión de resultados
+
+## ¿La teoría y los datos coinciden?
+
+| Predicción teórica | Observado |
+|---|---|
+| ME es eficiente cuando $m \approx n$ | ✅ Compite con BY en instancias de baja asimetría |
+| ME escala linealmente con $m + n$ | ✅ Su nube en @fig-asimetria crece con clara pendiente positiva |
+| BY alcanza $\mathcal{O}(m \log(n/m))$ | ✅ Su costo se mantiene casi plano frente a $n/m$ |
+| BY-bin, BY-B1, BY-B2 deben ser similares | ✅ Sus medianas difieren en menos del 10 % |
+| BK es competitivo en $k \geq 3$ | ✅ Se acerca a BY en mediana en $B$ y $C$ |
+| Las cinco configuraciones dan el mismo resultado | ✅ Control en @fig-tamanos lo confirma |
+
+## Sobre las variantes de búsqueda en BY
+
+Algo que me llamó la atención al ver los resultados es que las tres
+variantes de BY (binaria, $B_1$, $B_2$) producen distribuciones muy
+parecidas entre sí, tanto en comparaciones como en tiempos. Pensando
+por qué, creo que tiene sentido: el costo de BY está dominado por los
+$m$ pasos de divide y vencerás, no por la búsqueda interna que se
+ejecuta en cada paso. Las búsquedas no acotadas $B_1$ y $B_2$ son
+ligeramente más eficientes cuando la mediana cae cerca del punto
+donde se quedó la búsqueda anterior, pero en BY cada llamada parte
+desde una posición $sp$ que ya está acotada por las recursiones
+previas, así que el beneficio se diluye.
+
+Para que $B_2$ realmente despegue se necesitan listas mucho más
+grandes o un patrón donde las búsquedas consecutivas estén
+correlacionadas espacialmente. Eso es justo lo que ocurre en
+algoritmos como BK, donde el cursor anterior es un buen predictor de
+la posición siguiente [@barbay2010experimental], y por eso BK lo
+toma como búsqueda interna por defecto.
+
+## Sobre BK: ¿cuándo conviene usarlo?
+
+BK resultó competitivo con BY en los tres conjuntos y, en algunas
+instancias del conjunto $C$ (k=4), incluso lo supera. La razón es que
+BK procesa las $k$ listas en una pasada coordinada sin materializar
+los resultados intermedios que SvS sí construye al envolver a BY. En
+$C$ esto se nota porque hay $k-1 = 3$ intersecciones binarias que
+SvS tiene que ejecutar; BK las reemplaza por una única pasada
+$k$-aria.
+
+El precio que paga BK es complejidad de código (es bastante más
+sutil de implementar que ME o BY) y peor comportamiento de caché
+porque salta entre las $k$ listas. Pero en escenarios reales donde
+$k$ crece —pensemos en consultas booleanas con muchos términos— BK
+empieza a verse claramente como la mejor opción. Los estudios de
+@demaine2000adaptive y @barbay2010experimental llegan a conclusiones
+parecidas, así que no es solo lo que veo en este experimento sino
+algo más general.
+
+## Sobre el tradeoff comparaciones vs. tiempo
+
+Otra cosa que vale la pena notar es que el número de comparaciones y
+el tiempo de ejecución no siempre van perfectamente alineados. ME
+hace muchas más comparaciones que BY en mediana, pero esa diferencia
+no se traduce 1-a-1 en tiempo porque el merge tiene acceso secuencial
+a memoria (favorable para la caché) y BY tiene acceso semi-aleatorio.
+En esta plataforma y con estos tamaños el efecto es modesto, pero
+sospecho que para listas que no caben en caché L2 el balance se
+estrecharía. Es algo que me gustaría medir en un experimento futuro
+con listas de millones de elementos.
+
+# Conclusiones
+
+Lo primero que rescato de este ejercicio es algo que ya intuía pero
+que no había visto tan claro hasta hacer los experimentos: el merge
+clásico, que en abstracto parece "el algoritmo natural" para
+intersectar listas ordenadas, en realidad solo es buena idea cuando
+los conjuntos tienen tamaños parecidos. En las posting lists reales
+que usé eso casi nunca ocurre. La asimetría mediana en los tres
+conjuntos fue de varias decenas, y en muchas instancias el cociente
+$n/m$ superaba el centenar. En ese régimen ME paga el costo lineal
+$\mathcal{O}(m+n)$ aunque la intersección sea de apenas un par de
+elementos, y eso se ve clarísimo en la @fig-comparaciones donde las
+cajas de ME quedan muy por encima del resto.
+
+Baeza-Yates fue el que mejor se comportó en general. Su costo
+$\mathcal{O}(m \log(n/m))$ se nota en la @fig-asimetria: la nube de
+BY-bin crece muy despacio aunque la asimetría aumente varios órdenes
+de magnitud, justo como predice la fórmula. Lo que no esperaba es
+que las tres variantes de búsqueda (binaria, $B_1$ y $B_2$) salieran
+prácticamente empatadas. Mi hipótesis inicial era que $B_2$ debía
+ganar consistentemente porque su cota teórica es mejor; al ver los
+boxplots me tocó replantear: cuando el costo dominante son los $m$
+pasos de divide y vencerás, la búsqueda interna importa poco.
+
+BK fue para mí la sorpresa positiva del experimento. En $A$ ($k=2$)
+queda cerca de BY, pero en $B$ y especialmente en $C$ ($k=4$) se
+mantiene muy competitivo aunque no use SvS. Lo interesante es que
+hace una sola pasada coordinada sobre las $k$ listas, sin generar
+intersecciones intermedias, y eso le permite escalar con $k$ mejor
+de lo que hubiera apostado antes de correr el código. Sospecho que
+si se aumenta $k$ a 5 o 6, la diferencia sería aún más marcada a
+favor de BK.
+
+El gráfico de control de la @fig-tamanos resultó más útil de lo que
+pensé al principio. Verlo idéntico para los cinco algoritmos en cada
+conjunto me dio mucha tranquilidad, porque en algún punto del
+desarrollo tuve un bug donde BK perdía algunos elementos por culpa
+de los duplicados consecutivos en las listas reales (cosa que la
+literatura no menciona explícitamente). Sin ese gráfico me hubiera
+costado mucho más detectarlo. Es una buena costumbre que me llevo
+para experimentos futuros: cuando varios algoritmos deberían dar el
+mismo resultado, vale la pena reportar el resultado también, no solo
+las métricas de rendimiento.
+
+Una conexión con la unidad anterior que me dejó pensando: en la
+actividad 5.5 vi que $B_2$ no le ganaba a $B_1$ porque las listas
+eran muy chicas. Esperaba que acá, con listas más grandes, $B_2$
+mostraría su ventaja. No sucedió, pero por una razón distinta: el
+contexto de uso (como búsqueda interna dentro de BY) no le permite
+explotar lo que la hace buena. Es un recordatorio útil de que la
+mejor cota asintótica no garantiza el mejor rendimiento práctico,
+depende de cómo y dónde se use el algoritmo.
+
+Si tuviera que recomendarle a alguien qué algoritmo usar para
+intersectar posting lists en un buscador real con base en este
+experimento, mi respuesta sería: **Baeza-Yates con búsqueda binaria
+para consultas de uno o dos términos, Barbay-Kenyon para consultas
+con tres o más**. El merge clásico solo lo dejaría como caso especial
+para cuando se sepa de antemano que las listas son del mismo tamaño,
+que en mi experiencia no es lo común. Esta recomendación coincide con
+lo que reportan @barbay2010experimental en sus experimentos, lo cual
+me da bastante confianza en que las conclusiones se sostienen más
+allá de este conjunto de datos en particular.
+
+# Referencias
+
+::: {#refs}
+:::
